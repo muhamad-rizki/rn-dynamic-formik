@@ -11,6 +11,16 @@ export type DynamicFormProviderProps = ({
 export default class DynamicFormProvider extends React.Component<DynamicFormProviderProps> {
   constructor(props) {
     super(props);
+    this.state = {
+      formValues: {},
+    }
+  }
+
+  setFormValues = (key, values) => {
+    const { formValues } = this.state;
+    const newFormValues = Object.assign({}, formValues);
+    newFormValues[key] = values;
+    this.setState({ formValues: newFormValues });
   }
 
   render() {
@@ -21,6 +31,9 @@ export default class DynamicFormProvider extends React.Component<DynamicFormProv
       types,
       children,
     } = this.props;
+    const {
+      formValues,
+    } = this.state;
     return (
       <DynamicFormContext.Provider
         value={{
@@ -28,6 +41,8 @@ export default class DynamicFormProvider extends React.Component<DynamicFormProv
           schemas,
           templates,
           types,
+          formValues,
+          setFormValues: this.setFormValues,
         }}
       >
         {children}
