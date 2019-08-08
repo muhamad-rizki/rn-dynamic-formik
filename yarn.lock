@@ -1543,6 +1543,11 @@ cliui@^4.0.0:
     strip-ansi "^4.0.0"
     wrap-ansi "^2.0.0"
 
+clones@^1.2.0:
+  version "1.2.0"
+  resolved "http://192.168.85.5:8081/nexus/repository/npm-group/clones/-/clones-1.2.0.tgz#b34c872045446a9f264ccceb7731bca05c529b71"
+  integrity sha512-FXDYw4TjR8wgPZYui2LeTqWh1BLpfQ8lB6upMtlpDF6WlOOxghmTTxWyngdKTgozqBgKnHbTVwTE+hOHqAykuQ==
+
 co@^4.6.0:
   version "4.6.0"
   resolved "http://192.168.85.5:8081/nexus/repository/npm-group/co/-/co-4.6.0.tgz#6ea6bdf3d853ae54ccb8e47bfa0bf3f9031fb184"
@@ -5334,6 +5339,13 @@ safe-regex@^1.1.0:
   version "2.1.2"
   resolved "http://192.168.85.5:8081/nexus/repository/npm-group/safer-buffer/-/safer-buffer-2.1.2.tgz#44fa161b0187b9549dd84bb91802f9bd8385cd6a"
   integrity sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==
+
+safer-eval@^1.3.5:
+  version "1.3.5"
+  resolved "http://192.168.85.5:8081/nexus/repository/npm-group/safer-eval/-/safer-eval-1.3.5.tgz#a75a1193a4e1dfadd34a8c87ad08e7b978c494b1"
+  integrity sha512-BJ//K2Y+EgCbOHEsDGS5YahYBcYy7JcFpKDo2ba5t4MnOGHYtk7HvQkcxTDFvjQvJ0CRcdas/PyF+gTTCay+3w==
+  dependencies:
+    clones "^1.2.0"
 
 sane@^3.0.0:
   version "3.1.0"
