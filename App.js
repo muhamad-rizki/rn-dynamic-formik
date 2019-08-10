@@ -4,7 +4,7 @@ import DynamicFormProvider from './src/module/DynamicFormProvider';
 
 const simpleform = require('./src/examples/simpleform.json');
 
-export default class App extends Component<Props> {
+export default class App extends Component {
   render() {
     return (
       <DynamicFormProvider

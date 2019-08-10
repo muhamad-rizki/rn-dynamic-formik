@@ -1,6 +1,5 @@
-import React, { Component } from 'react'
-import { Text, View } from 'react-native'
-import { withDynamicForm } from '../module/withDynamicForm';
+import React, { Component } from 'react';
+import withDynamicForm from '../module/withDynamicForm';
 import QDynamicForm from '../module/QDynamicForm';
 
 class SimpleFormComponent extends Component {
@@ -10,7 +9,7 @@ class SimpleFormComponent extends Component {
         schema="simpleform"
         type="wizard"
       />
-    )
+    );
   }
 }
 

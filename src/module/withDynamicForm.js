@@ -1,18 +1,16 @@
 import React from 'react';
-import DynamicFormContext from './DynamicFormContext';
+import DynamicForm from './DynamicFormContext';
 
-export function withDynamicForm(Component) {
+export default function withDynamicForm(Component) {
   return function DynamicFormComponent(props) {
     return (
-      <DynamicFormContext.Consumer>
+      <DynamicForm.Consumer>
         {
-          (contexts) => {
-            return (
-              <Component {...props} {...contexts} />
-            );
-          }
+          contexts => (
+            <Component {...props} {...contexts} />
+          )
         }
-      </DynamicFormContext.Consumer>
-    )
-  }
+      </DynamicForm.Consumer>
+    );
+  };
 }

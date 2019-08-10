@@ -1,5 +1,9 @@
 import React from 'react';
-import DynamicFormContext from './DynamicFormContext';
+import DynamicForm from './DynamicFormContext';
+import TextInput from './templates/TextInput';
+import DatePicker from './templates/DatePicker';
+import CheckBox from './templates/CheckBox';
+import RadioGroup from './templates/RadioGroup';
 
 export type DynamicFormProviderProps = ({
   formats: Object,
@@ -13,7 +17,8 @@ export default class DynamicFormProvider extends React.Component<DynamicFormProv
     super(props);
     this.state = {
       formValues: {},
-    }
+      schemas: props.schemas,
+    };
   }
 
   setFormValues = (key, values) => {
@@ -23,30 +28,44 @@ export default class DynamicFormProvider extends React.Component<DynamicFormProv
     this.setState({ formValues: newFormValues });
   }
 
+  updateSchema = (key, currentSchema) => {
+    const { schemas } = this.state;
+    const newSchemas = JSON.parse(JSON.stringify(schemas));
+    newSchemas[key] = currentSchema;
+    this.setState({ schemas: newSchemas });
+  }
+
   render() {
     const {
       formats,
-      schemas,
       templates,
       types,
       children,
     } = this.props;
     const {
       formValues,
+      schemas,
     } = this.state;
     return (
-      <DynamicFormContext.Provider
+      <DynamicForm.Provider
         value={{
           formats,
           schemas,
-          templates,
+          templates: {
+            TextInput,
+            DatePicker,
+            CheckBox,
+            RadioGroup,
+            ...templates,
+          },
           types,
           formValues,
           setFormValues: this.setFormValues,
+          updateSchema: this.updateSchema,
         }}
       >
         {children}
-      </DynamicFormContext.Provider>
+      </DynamicForm.Provider>
     );
   }
 }

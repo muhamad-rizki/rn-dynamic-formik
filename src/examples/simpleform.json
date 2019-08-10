@@ -1,338 +1,2232 @@
 {
-  "id": 1,
-  "name": "FRM001e",
-  "description": "Beneficiary Schema",
-  "type": "object",
-  "config": {
-      "titles": "Main\nBeneficiary",
-      "baseTitles": [
-          "Select Person",
-          "Personal",
-          "Benefit Calculation"
-      ]
-  },
-  "properties": {
-      "beneficiary": {
-          "isRequired": true,
-          "type": "object",
-          "isRoot": true,
-          "title": "Who is the Beneficiary?",
-          "customTemplate": "QWizardContainer",
-          "properties": {
-              "beneficiaryperson": {
-                  "type": "string",
-                  "title": "Beneficiary person",
-                  "customTemplate": "QDropdownSchema",
-                  "disabled": true,
-                  "enum": [
-                      "New user"
-                  ],
-                  "nullOption": {
-                      "value": "",
-                      "text": "--Select--"
-                  },
-                  "isCollapsed": false,
-                  "isRequired": true,
-                  "config": {
-                      "contdesc": "beneficiary_person"
-                  },
-                  "events": {
-                      "onLoad": {
-                          "handler": "handlers.proceduralHandler",
-                          "args": {
-                              "steps": [
-                                  {
-                                      "handler": "handlers.inlineHandler",
-                                      "args": {
-                                          "script": "const currentKey = container.props.storageKey;globalAction.setGlobalVariable('storageKey', container.props.storageKey);const keys = Object.keys(globalAction.getAllValue().asObject()).filter(k => k.indexOf('$FRM001e$beneficiary') >= 0);if(keys.length <= 0 || keys.filter(m => m.indexOf(currentKey.split('$')[0]) >= 0).length <= 0){    keys.push(currentKey.split('$')[0] + '$FRM001e$beneficiary');}let unlocked = [];let locked = [];let sumLocked = 0;keys.forEach(k => {    let storeKey = k;    if(globalAction.getFieldValue(storeKey, 'beneficiary.benefitcalculationlock') !== 'true'){        unlocked.push(storeKey);    } else {        locked.push(storeKey);    }});if(locked.length === 0 && unlocked.length === 1){    globalAction.changeFieldValue(currentKey + '.beneficiary.benefitcalculation', '100.00');    globalAction.changeFieldValue(currentKey + '.beneficiary.benefitcalculationlock', 'false');    globalAction.commitChanges();    return null;}locked.forEach((key) => {    sumLocked += isNaN(parseFloat(globalAction.getFieldValue(key, 'beneficiary.benefitcalculation'))) ? 0 : parseFloat(globalAction.getFieldValue(key, 'beneficiary.benefitcalculation'));});let theRest = parseFloat(100.00) - parseFloat(sumLocked);let newValues = [];unlocked.forEach((key) => {    newValues.push((theRest / parseFloat(unlocked.length)).toFixed(2));});let finalTotal = parseFloat(newValues.reduce((a,b) => parseFloat(a) + parseFloat(b), 0)) + parseFloat(sumLocked);let lastValue = newValues[newValues.length - 1];if(finalTotal > 100.00){    newValues[newValues.length - 1] = parseFloat(lastValue - (finalTotal - 100.0)).toFixed(2);}else if(finalTotal < 100.00){    newValues[newValues.length - 1] = (parseFloat(lastValue) + (100.0 - finalTotal)).toFixed(2);}unlocked.forEach((key, index) => {    globalAction.changeFieldValue(key + '.beneficiary.benefitcalculation', newValues[index]);    globalAction.changeFieldValue(key + '.beneficiary.benefitcalculationlock', 'false');});globalAction.commitChanges();"
-                                      }
-                                  },
-                                  {
-                                      "handler": "handlers.updateSchema",
-                                      "args": {
-                                          "path": "properties.beneficiary.properties.beneficiaryperson.enum",
-                                          "type": "set",
-                                          "value": "${['New user'].concat(globalAction.findAllByPath('*.personal.fullname')).filter(function(e){return e;})}"
-                                      }
-                                  }
-                              ]
-                          }
-                      },
-                      "onFieldValueChanged": {
-                          "handler": "handlers.proceduralHandler",
-                          "args": {
-                              "steps": [
-                                  {
-                                      "handler": "handlers.conditionalHandler",
-                                      "args": {
-                                          "handlers": [
-                                              {
-                                                  "when": "${globalAction.getFieldValue(container.props.storageKey,'beneficiary.beneficiaryperson')=='New user'}",
-                                                  "handler": "handlers.inlineHandler",
-                                                  "args": {
-                                                      "script": "globalAction.removeFieldValue(container.props.storageKey.replace('beneficiary', 'personal'));globalAction.commitChanges();"
-                                                  }
-                                              },
-                                              {
-                                                  "when": "${globalAction.getFieldValue(container.props.storageKey,'beneficiary.beneficiaryperson')!='New user'}",
-                                                  "handler": "handlers.inlineHandler",
-                                                  "args": {
-                                                      "script": "var datas = globalAction.getAllValue().asObject();var availableKeys = container.props.schemas[1].properties['personal'].properties;for(var key in datas){if(datas[key].personal && datas[key].personal.fullname){if(globalAction.getFieldValue(container.props.storageKey, 'beneficiary.beneficiaryperson') == datas[key].personal.fullname){for(var mKey in datas[key].personal){if(availableKeys[mKey]){if(typeof datas[key].personal[mKey] == 'object') {for(var sKey in datas[key].personal[mKey]){globalAction.copyValue(key + '.personal.' + mKey + '.' + sKey, container.props.storageKey.replace('beneficiary', 'personal') + '.personal.' + mKey + '.' + sKey)}} else {globalAction.copyValue(key + '.personal.' + mKey, container.props.storageKey.replace('beneficiary', 'personal') + '.personal.' + mKey)}}}}}};globalAction.commitChanges()"
-                                                  }
-                                              }
-                                          ]
-                                      }
-                                  }
-                              ]
-                          }
-                      }
-                  }
-              },
-              "benefitcalculation": {
-                  "customTemplate": "QTextInputSchema",
-                  "type": "string",
-                  "title": " ",
-                  "isRequired": false,
-                  "config": {
-                      "isHidden": true
-                  }
-              },
-              "benefitcalculationlock": {
-                  "customTemplate": "QTextInputSchema",
-                  "type": "string",
-                  "title": " ",
-                  "isRequired": false,
-                  "config": {
-                      "isHidden": true
-                  }
-              }
-          }
-      },
-      "personal": {
-          "isRequired": true,
-          "type": "object",
-          "title": " ",
-          "isRoot": true,
-          "properties": {
-              "fullname": {
-                  "customTemplate": "QTextInputAutocomplete",
-                  "type": "string",
-                  "title": "Full name",
-                  "isRequired": true,
-                  "help": "*will be suggested from data lead if there are any",
-                  "maxLength": 40,
-                  "events": {
-                      "autoCompleteForm": {
-                          "handler": "handlers.autoCompleteForm",
-                          "args": {
-                              "value": "${value}",
-                              "container": "${container}",
-                              "form": "${form}"
-                          }
-                      },
-                      "onFieldValueChanged": {
-                          "handler": "handlers.inlineHandler",
-                          "args": {
-                              "script": "globalAction.changeFieldValue(container.props.storageKey.replace('personal', 'beneficiary') + '.beneficiary.beneficiaryperson', globalAction.getFieldValue(container.props.storageKey,'personal.fullname'))"
-                          }
-                      }
-                  }
-              },
-              "sex": {
-                  "customTemplate": "QRadioSchema",
-                  "type": "string",
-                  "title": "Sex",
-                  "isRequired": true,
-                  "enum": [
-                      "Male",
-                      "Female"
-                  ]
-              },
-              "dateofbirth": {
-                  "customTemplate": "QDatePickerNote",
-                  "config": {
-                      "titleNotesDate": "Note:",
-                      "contentNotesDate": "Age of beneficiaries below 17 years. Additional questions regarding parental respresentative data will be added",
-                      "maxDate": false,
-                      "minDate": true
-                  },
-                  "type": "string",
-                  "title": "Date of birth",
-                  "isRequired": true,
-                  "events": {
-                      "onFieldValueChanged": {
-                          "handler": "handlers.proceduralHandler",
-                          "args": {
-                              "steps": [
-                                  {
-                                      "handler": "handlers.hideSchema",
-                                      "args": {
-                                          "path": "properties.personal.properties.representative",
-                                          "value": "${Math.abs(Math.round((((new Date(globalAction.getFieldValue(container.props.storageKey,'personal.dateofbirth').split(' - ')[2], globalAction.getFieldValue(container.props.storageKey,'personal.dateofbirth').split(' - ')[1] - 1, globalAction.getFieldValue(container.props.storageKey,'personal.dateofbirth').split(' - ')[0]).getTime() - new Date().getTime()) / 1000) / (60 * 60 * 24)) / 365.25)) <= 17 ? false : true}"
-                                      }
-                                  },
-                                  {
-                                      "handler": "handlers.inlineHandler",
-                                      "args": {
-                                          "script": "let isHidden = Math.abs(Math.round((((new Date(globalAction.getFieldValue(container.props.storageKey,'personal.dateofbirth').split(' - ')[2], globalAction.getFieldValue(container.props.storageKey,'personal.dateofbirth').split(' - ')[1] - 1, globalAction.getFieldValue(container.props.storageKey,'personal.dateofbirth').split(' - ')[0]).getTime() - new Date().getTime()) / 1000) / (60 * 60 * 24)) / 365.25)) <= 17 ? false : true;if(isHidden){globalAction.removeFieldValue(container.props.storageKey + '.personal.representative');}globalAction.commitChanges();"
-                                      }
-                                  }
-                              ]
-                          }
-                      }
-                  }
-              },
-              "relationsmain": {
-                  "type": "string",
-                  "title": "Relationship with main insured",
-                  "customTemplate": "QSelectBoxSchema",
-                  "disabled": false,
-                  "enum": [
-                      "Child",
-                      "Brother",
-                      "Sister",
-                      "Other"
-                  ],
-                  "nullOption": {
-                      "value": "",
-                      "text": "--Select--"
-                  },
-                  "isCollapsed": false,
-                  "isRequired": true,
-                  "events": {
-                      "onFieldValueChanged": {
-                          "handler": "handlers.proceduralHandler",
-                          "args": {
-                              "steps": [
-                                  {
-                                      "handler": "handlers.hideSchema",
-                                      "args": {
-                                          "path": "properties.personal.properties.otherrelationsmain",
-                                          "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.relationsmain') != 'Other') ? true : false}"
-                                      }
-                                  },
-                                  {
-                                      "handler": "handlers.inlineHandler",
-                                      "args": {
-                                          "script": "let isHidden = globalAction.getFieldValue(container.props.storageKey,'personal.relationsmain') !== 'Other';if(isHidden){globalAction.removeFieldValue(container.props.storageKey + '.personal.otherrelationsmain');}globalAction.commitChanges();"
-                                      }
-                                  }
-                              ]
-                          }
-                      }
-                  }
-              },
-              "otherrelationsmain": {
-                  "customTemplate": "QTextInputSchema",
-                  "type": "string",
-                  "title": "Other relation with main insured",
-                  "isRequired": true,
-                  "maxLength": 20,
-                  "minLength": 2,
-                  "config": {
-                      "isHidden": true,
-                      "customError": "Cannot be less than 2 characters."
-                  }
-              },
-              "representative": {
-                  "isRequired": true,
-                  "type": "object",
-                  "title": "Parent Representative",
-                  "customTemplate": "QNotes",
-                  "config": {
-                      "isHidden": true,
-                      "titleNotes": "Note:",
-                      "contentNotes": "1. One(1) parent respresentative applies to all beneficiaries under the age of 17\n\n2. Each change of data on the parent representative group form will change all form of parental representation in all registered beneficiaries"
-                  },
-                  "properties": {
-                      "fullname": {
-                          "customTemplate": "QTextInputSchema",
-                          "type": "string",
-                          "title": "Full name",
-                          "isRequired": true
-                      },
-                      "sex": {
-                          "customTemplate": "QRadioSchema",
-                          "type": "string",
-                          "title": "Sex",
-                          "isRequired": true,
-                          "enum": [
-                              "Male",
-                              "Female"
-                          ]
-                      },
-                      "date": {
-                          "config": {
-                              "maxDate": false,
-                              "minDate": true
-                          },
-                          "customTemplate": "QDatePicker",
-                          "type": "string",
-                          "title": "Date of birth",
-                          "isRequired": true
-                      },
-                      "relationsprospective": {
-                          "type": "string",
-                          "title": "Relationship with prospective beneficiaries",
-                          "customTemplate": "QSelectBoxSchema",
-                          "disabled": false,
-                          "enum": [
-                              "Mother / Father",
-                              "Child",
-                              "Siblings",
-                              "Husband / wife",
-                              "Grandparents",
-                              "Grandchild / Great-grandson",
-                              "Uncle / Aunt",
-                              "Nephew",
-                              "Employer",
-                              "Employee",
-                              "Other"
-                          ],
-                          "nullOption": {
-                              "value": "",
-                              "text": "--Select--"
-                          },
-                          "isCollapsed": false,
-                          "isRequired": true,
-                          "events": {
-                              "onFieldValueChanged": {
-                                  "handler": "handlers.proceduralHandler",
-                                  "args": {
-                                      "steps": [
-                                          {
-                                              "handler": "handlers.hideSchema",
-                                              "args": {
-                                                  "path": "properties.personal.properties.representative.properties.otherrelationsprospective",
-                                                  "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.representative.relationsprospective') != 'Other') ? true : false}"
-                                              }
-                                          },
-                                          {
-                                              "handler": "handlers.inlineHandler",
-                                              "args": {
-                                                  "script": "var isHidden = globalAction.getFieldValue(container.props.storageKey,'personal.representative.relationprospective') !== 'Other';if(isHidden){    globalAction.removeFieldValue(container.props.storageKey + '.personal.representative.otherrelationsprospective');}globalAction.commitChanges();"
-                                              }
-                                          }
-                                      ]
-                                  }
-                              }
-                          }
-                      },
-                      "otherrelationsprospective": {
-                          "customTemplate": "QTextInputSchema",
-                          "type": "string",
-                          "title": "Other relationship with prospective beneficiaries",
-                          "isRequired": true,
-                          "maxLength": 20,
-                          "minLength": 2,
-                          "config": {
-                              "isHidden": true,
-                              "customError": "Cannot be less than 2 characters."
-                          }
-                      }
-                  }
-              }
-          }
-      }
-  }
+    "id": 1,
+    "name": "FRM001a",
+    "description": "INSURED JSON FORM",
+    "type": "object",
+    "__customTemplate": "QWizardNextStep",
+    "config": {
+        "titles": "Main\nInsured",
+        "baseTitles": [
+            "Select Person",
+            "Personal",
+            "Health"
+        ]
+    },
+    "events": {
+        "onSubmit": {
+            "handler": "handlers.invoke",
+            "args": {}
+        },
+        "validateForm": {
+            "handler": "handlers.validateForm",
+            "args": {}
+        },
+        "showHideMe": {
+            "handler": "handlers.proceduralHandler",
+            "args": {
+                "steps": [
+                    {
+                        "handler": "handlers.hideSchema",
+                        "args": {
+                            "path": "properties.personal.properties.profession.properties.subprofession",
+                            "value": "${false}"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "properties": {
+        "insured": {
+            "isRequired": true,
+            "isRoot": true,
+            "type": "object",
+            "title": "Who is the main insured?",
+            "customTemplate": "QWizardContainer",
+            "properties": {
+                "insuredperson": {
+                    "type": "string",
+                    "title": "Main insured person",
+                    "customTemplate": "QDropdownSchema",
+                    "disabled": false,
+                    "enum": [
+                        "New user"
+                    ],
+                    "nullOption": {
+                        "value": "",
+                        "text": "--Select--"
+                    },
+                    "isCollapsed": false,
+                    "isRequired": true,
+                    "config": {
+                        "contdesc": "main_insured_person"
+                    },
+                    "events": {
+                        "onLoad": {
+                            "handler": "handlers.proceduralHandler",
+                            "args": {
+                                "steps": [
+                                    {
+                                        "handler": "handlers.updateSchema",
+                                        "args": {
+                                            "path": "properties.insured.properties.insuredperson.enum",
+                                            "type": "set",
+                                            "value": "${['New user'].concat(globalAction.findAllByPath('*.personal.fullname')).filter(function(e){return e;})}"
+                                        }
+                                    },
+                                    {
+                                        "handler": "handlers.inlineHandler",
+                                        "args": {
+                                            "script": "globalAction.setGlobalVariable('storageKey', container.props.storageKey)"
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        "onFieldValueChanged": {
+                            "handler": "handlers.proceduralHandler",
+                            "args": {
+                                "steps": [
+                                    {
+                                        "handler": "handlers.conditionalHandler",
+                                        "args": {
+                                            "handlers": [
+                                                {
+                                                    "when": "${globalAction.getFieldValue(container.props.storageKey,'insured.insuredperson')=='New user'}",
+                                                    "handler": "handlers.inlineHandler",
+                                                    "args": {
+                                                        "script": "for(var subkey in container.props.schemas[1].properties['personal'].properties){if(!container.props.schemas[1].properties['personal'].properties[subkey].properties){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.' + subkey)}else{for(var subsubkey in container.props.schemas[1].properties['personal'].properties[subkey].properties){if(!container.props.schemas[1].properties['personal'].properties[subkey].properties[subsubkey].properties){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.' + subkey + '.' + subsubkey)}else{for(var subsubsubkey in container.props.schemas[1].properties['personal'].properties[subkey].properties[subsubkey].properties){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.' + subkey + '.' + subsubkey + '.' + subsubsubkey)}}}}};globalAction.commitChanges();"
+                                                    }
+                                                },
+                                                {
+                                                    "when": "${globalAction.getFieldValue(container.props.storageKey,'insured.insuredperson')!='New user'}",
+                                                    "handler": "handlers.inlineHandler",
+                                                    "args": {
+                                                        "script": "var datas = globalAction.getAllValue().asObject();var availableKeys = container.props.schemas[1].properties['personal'].properties;for(var key in datas){if(datas[key].personal && datas[key].personal.fullname){if(globalAction.getFieldValue(container.props.storageKey, 'insured.insuredperson') == datas[key].personal.fullname){for(var mKey in datas[key].personal){if(availableKeys[mKey]){if(typeof datas[key].personal[mKey] == 'object') {for(var sKey in datas[key].personal[mKey]){globalAction.copyValue(key + '.personal.' + mKey + '.' + sKey, container.props.storageKey.replace('insured', 'personal') + '.personal.' + mKey + '.' + sKey)}} else {globalAction.copyValue(key + '.personal.' + mKey, container.props.storageKey.replace('insured', 'personal') + '.personal.' + mKey)}}}}}};globalAction.commitChanges()"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "personal": {
+            "isRequired": true,
+            "isRoot": true,
+            "type": "object",
+            "title": "Profile",
+            "customTemplate": "QWizardContainer",
+            "properties": {
+                "fullname": {
+                    "customTemplate": "QTextInputAutocomplete",
+                    "type": "string",
+                    "title": "Full name",
+                    "isRequired": true,
+                    "help": "*will be suggested from data lead if there are any",
+                    "maxLength": 40,
+                    "minLength": 2,
+                    "events": {
+                        "autoCompleteForm": {
+                            "handler": "handlers.autoCompleteForm",
+                            "args": {
+                                "value": "${value}",
+                                "container": "${container}",
+                                "form": "${form}"
+                            }
+                        },
+                        "onFieldValueChanged": {
+                            "handler": "handlers.inlineHandler",
+                            "args": {
+                                "script": "globalAction.changeFieldValue(container.props.storageKey + '.insured.insuredperson', globalAction.getFieldValue(container.props.storageKey,'personal.fullname'))"
+                            }
+                        }
+                    },
+                    "config": {
+                        "customError": "Cannot be less than 2 characters.",
+                        "minLength": 2,
+                        "pathType": "insured.insuredperson"
+                    }
+                },
+                "salutation": {
+                    "config": {
+                        "subOptional": " - optional"
+                    },
+                    "type": "string",
+                    "title": "Salutation",
+                    "customTemplate": "QSelectBoxSchema",
+                    "disabled": false,
+                    "enum": [
+                        "Tn",
+                        "Ny",
+                        "Nn",
+                        "Tanpa sebutan",
+                        "Other"
+                    ],
+                    "nullOption": {
+                        "value": "",
+                        "text": "--Select--"
+                    },
+                    "isCollapsed": false,
+                    "isRequired": false,
+                    "events": {
+                        "onFieldValueChanged": {
+                            "handler": "handlers.proceduralHandler",
+                            "args": {
+                                "steps": [
+                                    {
+                                        "handler": "handlers.hideSchema",
+                                        "args": {
+                                            "path": "properties.personal.properties.othersalutation",
+                                            "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.salutation') != 'Other') ? true : false}"
+                                        }
+                                    },
+                                    {
+                                        "handler": "handlers.inlineHandler",
+                                        "args": {
+                                            "script": "var isHidden = globalAction.getFieldValue(container.props.storageKey,'personal.salutation') !== 'Other';if(isHidden){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.othersalutation');}globalAction.commitChanges();"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "othersalutation": {
+                    "customTemplate": "QTextInputSchema",
+                    "type": "string",
+                    "title": "Other Salutation",
+                    "isRequired": true,
+                    "maxLength": 10,
+                    "minLength": 2,
+                    "config": {
+                        "isHidden": true,
+                        "customError": "Cannot be less than 2 characters."
+                    }
+                },
+                "idtype": {
+                    "type": "string",
+                    "title": "ID type",
+                    "customTemplate": "QSelectBoxSchema",
+                    "disabled": false,
+                    "enum": [
+                        "KTP",
+                        "SIM",
+                        "Passport",
+                        "KITAS",
+                        "Akte Lahir",
+                        "e-KTP",
+                        "Other"
+                    ],
+                    "nullOption": {
+                        "value": "",
+                        "text": "--Select--"
+                    },
+                    "isCollapsed": false,
+                    "isRequired": true,
+                    "events": {
+                        "onFieldValueChanged": {
+                            "handler": "handlers.proceduralHandler",
+                            "args": {
+                                "steps": [
+                                    {
+                                        "handler": "handlers.hideSchema",
+                                        "args": {
+                                            "path": "properties.personal.properties.otheridtype",
+                                            "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.idtype') != 'Other') ? true : false}"
+                                        }
+                                    },
+                                    {
+                                        "handler": "handlers.inlineHandler",
+                                        "args": {
+                                            "script": "var isHidden = globalAction.getFieldValue(container.props.storageKey,'personal.idtype') !== 'Other';if(isHidden){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.otheridtype');}globalAction.commitChanges();"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "otheridtype": {
+                    "customTemplate": "QTextInputSchema",
+                    "type": "string",
+                    "title": "Other ID Type",
+                    "isRequired": true,
+                    "maxLength": 10,
+                    "minLength": 2,
+                    "config": {
+                        "customError": "Cannot be less than 2 characters.",
+                        "isHidden": true
+                    }
+                },
+                "idnumber": {
+                    "customTemplate": "QTextInputNumericSchema",
+                    "type": "string",
+                    "title": "ID number",
+                    "isRequired": true,
+                    "help": "*Match the selected ID type!",
+                    "maxLength": 20,
+                    "minLength": 7,
+                    "config": {
+                        "customError": "Make sure the number entered is correct (Cannot be less than 7 digits)."
+                    }
+                },
+                "idvalid": {
+                    "config": {
+                        "subOptional": " - optional",
+                        "maxDate": true,
+                        "minDate": false
+                    },
+                    "customTemplate": "QDatePicker",
+                    "type": "string",
+                    "title": "ID valid until",
+                    "isRequired": false
+                },
+                "idcountry": {
+                    "config": {
+                        "subOptional": " - optional"
+                    },
+                    "type": "string",
+                    "title": "ID country issuer",
+                    "help": "*Country State",
+                    "customTemplate": "QSelectBoxSchema",
+                    "disabled": false,
+                    "enum": [
+                        "004",
+                        "248",
+                        "008",
+                        "012",
+                        "012",
+                        "016",
+                        "020",
+                        "024",
+                        "660",
+                        "010",
+                        "028",
+                        "032",
+                        "051",
+                        "533",
+                        "036",
+                        "040",
+                        "031"
+                    ],
+                    "nullOption": {
+                        "value": "",
+                        "text": "--Select--"
+                    },
+                    "isCollapsed": false,
+                    "isRequired": false
+                },
+                "personalphone": {
+                    "customTemplate": "QTextInputNumericSchema",
+                    "type": "string",
+                    "title": "Phone",
+                    "isRequired": true,
+                    "help": "*Eg: (08xx) xxxx-xxxx",
+                    "maxLength": 13,
+                    "minLength": 10,
+                    "config": {
+                        "customError": "Make sure the provider code and the number of digits entered is correct (10-13 digits)."
+                    }
+                },
+                "personalemail": {
+                    "customTemplate": "QTextInputSchema",
+                    "type": "email",
+                    "title": "Email",
+                    "isRequired": true,
+                    "help": "*Eg: example@mail.com",
+                    "minLength": 1,
+                    "config": {
+                        "customError": "Please enter a valid email address.",
+                        "format": "email"
+                    }
+                },
+                "placeofbirth": {
+                    "type": "string",
+                    "title": "Place of birth",
+                    "help": "*City",
+                    "customTemplate": "QSelectBoxSchema",
+                    "disabled": false,
+                    "enum": [
+                        "Aceh",
+                        "Bali",
+                        "Bangka Belitung Islands",
+                        "Banten",
+                        "Bengkulu",
+                        "Gorontalo",
+                        "Jambi",
+                        "West Java",
+                        "Central Java",
+                        "East Java",
+                        "West Kalimantan",
+                        "South Kalimantan",
+                        "Central Kalimantan",
+                        "East Kalimantan",
+                        "North Kalimantan",
+                        "Riau Islands",
+                        "Lampung",
+                        "Maluku",
+                        "North Maluku",
+                        "West Nusa Tenggara",
+                        "East Nusa Tenggara",
+                        "Papua",
+                        "West Papua",
+                        "Riau",
+                        "West Sulawesi",
+                        "South Sulawesi",
+                        "Central Sulawesi",
+                        "Southeast Sulawesi",
+                        "North Sulawesi",
+                        "West Sumatra",
+                        "South Sumatra",
+                        "North Sumatra",
+                        "Jakarta",
+                        "Yogyakarta"
+                    ],
+                    "nullOption": {
+                        "value": "",
+                        "text": "--Select--"
+                    },
+                    "isCollapsed": false,
+                    "isRequired": true
+                },
+                "dateofbirth": {
+                    "config": {
+                        "maxDate": false,
+                        "minDate": true
+                    },
+                    "customTemplate": "QDatePicker",
+                    "type": "string",
+                    "title": "Date of birth",
+                    "isRequired": true
+                },
+                "sex": {
+                    "customTemplate": "QRadioSchema",
+                    "type": "string",
+                    "title": "Sex",
+                    "isRequired": true,
+                    "enum": [
+                        "Male",
+                        "Female"
+                    ],
+                    "events": {
+                        "onFieldValueChanged": {
+                            "handler": "handlers.proceduralHandler",
+                            "args": {
+                                "steps": [
+                                    {
+                                        "handler": "handlers.hideSchema",
+                                        "args": {
+                                            "path": "properties.health.properties.pregnancy",
+                                            "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.sex') == 'Female') ? false : true}"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "nationality": {
+                    "type": "string",
+                    "title": "Nationality",
+                    "help": "*Country/State",
+                    "customTemplate": "QSelectBoxSchema",
+                    "disabled": false,
+                    "enum": [
+                        "Afghan",
+                        "Albanian",
+                        "Algerian",
+                        "American",
+                        "Andorran",
+                        "Angolan",
+                        "Antiguans",
+                        "Argentinean",
+                        "Armenian",
+                        "Australian",
+                        "Austrian",
+                        "Azerbaijani",
+                        "Bahamian",
+                        "Bahraini",
+                        "Bangladeshi",
+                        "Barbadian",
+                        "Barbudans",
+                        "Batswana",
+                        "Belarusian",
+                        "Belgian",
+                        "Belizean",
+                        "Beninese",
+                        "Bhutanese",
+                        "Bolivian",
+                        "Bosnian",
+                        "Brazilian",
+                        "British",
+                        "Bruneian",
+                        "Bulgarian",
+                        "Burkinabe",
+                        "Burmese",
+                        "Burundian",
+                        "Cambodian",
+                        "Cameroonian",
+                        "Canadian",
+                        "Cape Verdean",
+                        "Central African",
+                        "Chadian",
+                        "Chilean",
+                        "Chinese",
+                        "Colombian",
+                        "Comoran",
+                        "Congolese"
+                    ],
+                    "nullOption": {
+                        "value": "",
+                        "text": "--Select--"
+                    },
+                    "isCollapsed": false,
+                    "isRequired": true
+                },
+                "religion": {
+                    "type": "string",
+                    "title": "Religion",
+                    "customTemplate": "QSelectBoxSchema",
+                    "disabled": false,
+                    "enum": [
+                        "Islam",
+                        "Protestan",
+                        "Katolik",
+                        "Hindu",
+                        "Budha",
+                        "Other"
+                    ],
+                    "nullOption": {
+                        "value": "",
+                        "text": "--Select--"
+                    },
+                    "isCollapsed": false,
+                    "isRequired": true,
+                    "events": {
+                        "onFieldValueChanged": {
+                            "handler": "handlers.proceduralHandler",
+                            "args": {
+                                "steps": [
+                                    {
+                                        "handler": "handlers.hideSchema",
+                                        "args": {
+                                            "path": "properties.personal.properties.otherreligion",
+                                            "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.religion') != 'Other') ? true : false}"
+                                        }
+                                    },
+                                    {
+                                        "handler": "handlers.inlineHandler",
+                                        "args": {
+                                            "script": "var isHidden = globalAction.getFieldValue(container.props.storageKey,'personal.religion') !== 'Other';if(isHidden){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.otherreligion');}globalAction.commitChanges();"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "otherreligion": {
+                    "customTemplate": "QTextInputSchema",
+                    "type": "string",
+                    "title": "Other Religion",
+                    "isRequired": true,
+                    "maxLength": 40,
+                    "minLength": 5,
+                    "config": {
+                        "customError": "Cannot be less than 5 characters.",
+                        "isHidden": true
+                    }
+                },
+                "marital": {
+                    "type": "string",
+                    "title": "Marital Status",
+                    "customTemplate": "QSelectBoxSchema",
+                    "disabled": true,
+                    "enum": [
+                        "Kawin",
+                        "Belum Kawin",
+                        "Duda",
+                        "Janda"
+                    ],
+                    "nullOption": {
+                        "value": "",
+                        "text": "--Select--"
+                    },
+                    "isCollapsed": false,
+                    "isRequired": true
+                },
+                "education": {
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Education",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "education": {
+                            "config": {
+                                "subOptional": " - optional"
+                            },
+                            "type": "string",
+                            "title": "Last education",
+                            "customTemplate": "QSelectBoxSchema",
+                            "disabled": false,
+                            "enum": [
+                                "SD",
+                                "SMP",
+                                "SMA/SMK",
+                                "D1",
+                                "D2",
+                                "D3",
+                                "D4",
+                                "S1",
+                                "S2",
+                                "S3",
+                                "No educcation formal",
+                                "No educcation"
+                            ],
+                            "nullOption": {
+                                "value": "",
+                                "text": "--Select--"
+                            },
+                            "isCollapsed": false,
+                            "isRequired": false
+                        }
+                    }
+                },
+                "workplacesame": {
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Home Address",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "subworkplacesame": {
+                            "isRequired": true,
+                            "type": "object",
+                            "title": " ",
+                            "config": {
+                                "isHidden": false,
+                                "isSubContainer": true
+                            },
+                            "customTemplate": "QWizardContainer",
+                            "properties": {
+                                "homeaddress": {
+                                    "customTemplate": "QTextInputSchema",
+                                    "type": "string",
+                                    "title": "Home Address",
+                                    "isRequired": true,
+                                    "help": "*Street name & number",
+                                    "maxLength": 60,
+                                    "minLength": 10,
+                                    "config": {
+                                        "customError": "Cannot be less than 10 characters.",
+                                        "isHidden": false
+                                    }
+                                },
+                                "homeaddressbuildingfloor": {
+                                    "customTemplate": "QTextInputSchema",
+                                    "type": "string",
+                                    "title": "Home Address (Additional)",
+                                    "isRequired": true,
+                                    "help": "*Building & floor/RT & RW",
+                                    "maxLength": 60,
+                                    "minLength": 10,
+                                    "config": {
+                                        "customError": "Cannot be less than 10 characters.",
+                                        "isHidden": false
+                                    }
+                                },
+                                "homecity": {
+                                    "type": "string",
+                                    "title": "City",
+                                    "customTemplate": "QSelectBoxSchema",
+                                    "disabled": false,
+                                    "enum": [
+                                        "Aceh Barat",
+                                        "Aceh Barat Daya",
+                                        "Aceh Besar",
+                                        "Aceh Jaya",
+                                        "Aceh Selatan",
+                                        "Aceh Singkil",
+                                        "Aceh Tamiang",
+                                        "Aceh Tengah",
+                                        "Aceh Tenggara",
+                                        "Aceh Timur",
+                                        "Aceh Utara",
+                                        "Agam",
+                                        "Alor",
+                                        "Ambon",
+                                        "Asahan",
+                                        "Asmat",
+                                        "Batam",
+                                        "Badung",
+                                        "Balangan",
+                                        "Balikpapan",
+                                        "Banda Aceh",
+                                        "Bandar Lampung",
+                                        "Bandung",
+                                        "Bandung Barat",
+                                        "Banggai",
+                                        "Banggai Kepulauan",
+                                        "Bangka",
+                                        "Bangka Barat",
+                                        "Bangka Selatan",
+                                        "Bangka Tengah",
+                                        "Bangkalan",
+                                        "Bangli",
+                                        "Banjar",
+                                        "Banjar Baru",
+                                        "Banjarmasin",
+                                        "Banjarnegara",
+                                        "Bantaeng",
+                                        "Bantul",
+                                        "Banyu Asin",
+                                        "Banyumas",
+                                        "Banyuwangi",
+                                        "Barito Kuala",
+                                        "Barito Selatan",
+                                        "Barito Timur",
+                                        "Barito Utara",
+                                        "Barru",
+                                        "Baru",
+                                        "Batang",
+                                        "Batang Hari",
+                                        "Batu",
+                                        "Batu Bara",
+                                        "Baubau",
+                                        "Bekasi",
+                                        "Belitung",
+                                        "Belitung Timur",
+                                        "Belu"
+                                    ],
+                                    "nullOption": {
+                                        "value": "",
+                                        "text": "--Select--"
+                                    },
+                                    "isCollapsed": false,
+                                    "isRequired": true,
+                                    "config": {
+                                        "isHidden": false
+                                    }
+                                },
+                                "homeadministrativecity": {
+                                    "type": "string",
+                                    "title": "Administrative city",
+                                    "customTemplate": "QSelectBoxSchema",
+                                    "disabled": true,
+                                    "enum": [
+                                        "Abab",
+                                        "Abang",
+                                        "Abeli",
+                                        "Abenaho",
+                                        "Abepura",
+                                        "Abiansemal",
+                                        "Aboy",
+                                        "Abuki",
+                                        "Abun",
+                                        "Abung  Kunang",
+                                        "Abung Barat",
+                                        "Abung Pekurun",
+                                        "Abung Selatan",
+                                        "Abung Semuli",
+                                        "Abung Surakarta",
+                                        "Abung Tengah",
+                                        "Abung Timur",
+                                        "Abung Tinggi",
+                                        "Adi Luwih",
+                                        "Adian Koting",
+                                        "Adimulyo",
+                                        "Adipala",
+                                        "Adiwerna",
+                                        "Adonara",
+                                        "Adonara Barat",
+                                        "Adonara Tengah",
+                                        "Adonara Timur",
+                                        "Aek Bilah",
+                                        "Aek Kuasan",
+                                        "Aek Kuo",
+                                        "Aek Ledong",
+                                        "Aek Nabara Barumun",
+                                        "Aek Natas",
+                                        "Aek Songsongan",
+                                        "Aere",
+                                        "Aertembaga",
+                                        "Aesesa",
+                                        "Aesesa Selatan",
+                                        "Afulu",
+                                        "Agadugume",
+                                        "Agats",
+                                        "Agimuga",
+                                        "Agisiga",
+                                        "Agrabinta",
+                                        "Agung",
+                                        "Agung Barat",
+                                        "Agung Timur",
+                                        "Aifat",
+                                        "Aifat Selatan",
+                                        "Aifat Timur",
+                                        "Aifat Timur Jauh",
+                                        "Aifat Timur Selatan",
+                                        "Aifat Timur Tengah",
+                                        "Aifat Utara",
+                                        "Aikmel",
+                                        "Aimando Padaido",
+                                        "Aimas",
+                                        "Aimere",
+                                        "Air Batu"
+                                    ],
+                                    "nullOption": {
+                                        "value": "",
+                                        "text": "--Select--"
+                                    },
+                                    "isCollapsed": false,
+                                    "isRequired": true,
+                                    "config": {
+                                        "isHidden": false
+                                    }
+                                },
+                                "homedistrict": {
+                                    "type": "string",
+                                    "title": "District",
+                                    "customTemplate": "QSelectBoxSchema",
+                                    "disabled": false,
+                                    "enum": [
+                                        "alen",
+                                        "amplas",
+                                        "amuro",
+                                        "apur",
+                                        "ara",
+                                        "asera",
+                                        "aur",
+                                        "awa",
+                                        "awo",
+                                        "a yani pura",
+                                        "a'bulosibatang",
+                                        "aan",
+                                        "ababi",
+                                        "abadi jaya",
+                                        "abadijaya",
+                                        "abai",
+                                        "abai siat",
+                                        "abail",
+                                        "abaimaida",
+                                        "abak",
+                                        "abamu",
+                                        "abang",
+                                        "abang batu dinding",
+                                        "abang songan",
+                                        "abar-abir",
+                                        "abason",
+                                        "abat",
+                                        "abatadi",
+                                        "abau",
+                                        "abaugi / obaikagopa",
+                                        "abbajareng",
+                                        "abbanderangnge",
+                                        "abbanuang",
+                                        "abbanuange",
+                                        "abbatireng",
+                                        "abbokongang",
+                                        "abbumpungeng",
+                                        "abe pantai",
+                                        "abean",
+                                        "abeko",
+                                        "abeli",
+                                        "abeli dalam",
+                                        "abelisawah",
+                                        "abena",
+                                        "abenaho",
+                                        "abenggi",
+                                        "abepur",
+                                        "aberiambut",
+                                        "abeuk budi"
+                                    ],
+                                    "nullOption": {
+                                        "value": "",
+                                        "text": "--Select--"
+                                    },
+                                    "isCollapsed": false,
+                                    "isRequired": true,
+                                    "config": {
+                                        "isHidden": false
+                                    }
+                                },
+                                "homepostalcode": {
+                                    "config": {
+                                        "subOptional": " - optional",
+                                        "customError": "Please enter a valid postal code.",
+                                        "isHidden": false
+                                    },
+                                    "customTemplate": "QTextInputNumericSchema",
+                                    "type": "string",
+                                    "title": "Postal Code",
+                                    "help": "*5 Digits code.",
+                                    "isRequired": false,
+                                    "maxLength": 5,
+                                    "minLength": 1
+                                },
+                                "homephoneareacode": {
+                                    "config": {
+                                        "subOptional": " - optional",
+                                        "customError": "Please enter a valid area code (3-4 digits).",
+                                        "isHidden": false
+                                    },
+                                    "customTemplate": "QTextInputNumericSchema",
+                                    "type": "string",
+                                    "title": "House phone area code",
+                                    "help": "*Eg: 021 / 0274",
+                                    "isRequired": false,
+                                    "maxLength": 4,
+                                    "minLength": 3
+                                },
+                                "homephone": {
+                                    "config": {
+                                        "subOptional": " - optional",
+                                        "customError": "Make sure the number of digits entered is correct (7-8 digits).",
+                                        "isHidden": false
+                                    },
+                                    "customTemplate": "QTextInputNumericSchema",
+                                    "type": "string",
+                                    "title": "House Phone",
+                                    "help": "*Eg: 8834xxxx",
+                                    "isRequired": false,
+                                    "maxLength": 8,
+                                    "minLength": 7
+                                }
+                            }
+                        }
+                    }
+                },
+                "profession": {
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Profession",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "question": {
+                            "customTemplate": "QRadioSchema",
+                            "type": "string",
+                            "title": "Do you currently have a job?",
+                            "isRequired": true,
+                            "enum": [
+                                "Yes",
+                                "No/Housewife"
+                            ],
+                            "events": {
+                                "onFieldValueChanged": {
+                                    "handler": "handlers.proceduralHandler",
+                                    "args": {
+                                        "steps": [
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.personal.properties.profession.properties.subprofession",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.profession.question') == 'Yes') ? false : true}"
+                                                }
+                                            },
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.personal.properties.companyname",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.profession.question') == 'Yes') ? false : true}"
+                                                }
+                                            },
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.personal.properties.companyname.properties.subcompanyname",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.companyname.question') == 'Yes') ? false : true}"
+                                                }
+                                            },
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.personal.properties.mailings.properties.mailingaddresstype",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.companyname.question') == 'Yes') ? false : true}"
+                                                }
+                                            },
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.personal.properties.mailings.properties.mailingaddressworkplace",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.companyname.question') == 'Yes') ? true : false}"
+                                                }
+                                            },
+                                            {
+                                                "handler": "handlers.inlineHandler",
+                                                "args": {
+                                                    "script": "var isHidden = globalAction.getFieldValue(container.props.storageKey,'personal.companyname.question') !== 'Yes';if(isHidden){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.companyname.subcompanyname');globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.mailings.mailingaddresstype');}else{globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.mailings.mailingaddressworkplace');}globalAction.commitChanges();"
+                                                }
+                                            },
+                                            {
+                                                "handler": "handlers.inlineHandler",
+                                                "args": {
+                                                    "script": "var isHidden = globalAction.getFieldValue(container.props.storageKey,'personal.profession.question') !== 'Yes';if(isHidden){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.profession.subprofession');globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.companyname');}globalAction.commitChanges();"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "subprofession": {
+                            "isRequired": true,
+                            "type": "object",
+                            "config": {
+                                "isHidden": true,
+                                "isSubContainer": true
+                            },
+                            "title": " ",
+                            "customTemplate": "QWizardContainer",
+                            "properties": {
+                                "ocupation": {
+                                    "type": "string",
+                                    "title": "Occupation",
+                                    "customTemplate": "QSelectBoxSchema",
+                                    "disabled": false,
+                                    "enum": [
+                                        "Administrator database",
+                                        "Administrator pendidikan",
+                                        "Administrator Pendidikan, tingkat tinggi",
+                                        "Agen dan manajer artis, seniman, atlet",
+                                        "Agen pengiriman dan kargo",
+                                        "Agen sales asuransi",
+                                        "Agen sales periklanan",
+                                        "Agen sales real estate",
+                                        "Agen sales retail",
+                                        "Agen sales untuk sekuritas dan komoditas",
+                                        "Agen sales, jasa keuangan",
+                                        "Agen tiket transportasi dan reservasi",
+                                        "Agen wisata",
+                                        "Ahli anestesi",
+                                        "Ahli bedah",
+                                        "Ahli biofisika",
+                                        "Ahli biokimia",
+                                        "Ahli farmasi",
+                                        "Ahli fisika",
+                                        "Ahli geografi",
+                                        "Ahli geologi (geologist)",
+                                        "Ahli hidrologi (hydrologist)",
+                                        "Ahli kimia",
+                                        "Ahli kostum",
+                                        "Ahli matematika",
+                                        "Ahli mikrobiologi",
+                                        "Ahli nuklir",
+                                        "Ahli nutrisi dan diet",
+                                        "Ahli perhiasan",
+                                        "Ahli reparasi instrumen dengan keyboard dan penyeting tune alat music",
+                                        "Ahli reparasi sepatu dan kulit",
+                                        "Ahli Sejarah",
+                                        "Ahli statistic",
+                                        "Ahli teknologi pembedahan",
+                                        "Ahli tumbuhan",
+                                        "Ahli zoologi",
+                                        "Aktor dan aktris",
+                                        "Aktuari",
+                                        "Akuntan",
+                                        "Analis berita",
+                                        "Analis budget",
+                                        "Analis financial",
+                                        "Analis keuangan",
+                                        "Analis kredit",
+                                        "Analis manajemen",
+                                        "Analis Pasar",
+                                        "Antropolog",
+                                        "Aranser music dan orchestra",
+                                        "Arbitrator, Mediator hukum",
+                                        "Arkeolog",
+                                        "Arsitek",
+                                        "Arsitek landscape",
+                                        "Art Director",
+                                        "Asesor",
+                                        "Asisten dokter",
+                                        "Asisten dokter gigi",
+                                        "Asisten dokter hewan",
+                                        "Asisten dosen S2",
+                                        "Asisten guru",
+                                        "Asisten HRD, kecuali Payroll dan Timekeeping",
+                                        "Asisten medis",
+                                        "Asisten perpustakaan",
+                                        "Asisten statistic",
+                                        "Astronom",
+                                        "Auditor",
+                                        "Bartender",
+                                        "Copywriter",
+                                        "Customer Service Representative",
+                                        "Customer Services line pertama, supervisor",
+                                        "Designer grafis",
+                                        "Designer interior",
+                                        "Other"
+                                    ],
+                                    "nullOption": {
+                                        "value": "",
+                                        "text": "--Select--"
+                                    },
+                                    "isCollapsed": false,
+                                    "isRequired": true,
+                                    "events": {
+                                        "onFieldValueChanged": {
+                                            "handler": "handlers.proceduralHandler",
+                                            "args": {
+                                                "steps": [
+                                                    {
+                                                        "handler": "handlers.hideSchema",
+                                                        "args": {
+                                                            "path": "properties.personal.properties.profession.properties.subprofession.properties.otherocupation",
+                                                            "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.profession.subprofession.ocupation') == 'Other') ? false : true}"
+                                                        }
+                                                    },
+                                                    {
+                                                        "handler": "handlers.inlineHandler",
+                                                        "args": {
+                                                            "script": "var isHidden = globalAction.getFieldValue(container.props.storageKey,'personal.profession.subprofession.ocupation') !== 'Other';if(isHidden){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.profession.subprofession.otherocupation');}globalAction.commitChanges();"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                "otherocupation": {
+                                    "customTemplate": "QTextInputSchema",
+                                    "type": "string",
+                                    "title": "Other Occupation",
+                                    "isRequired": true,
+                                    "maxLength": 40,
+                                    "minLength": 5,
+                                    "config": {
+                                        "customError": "Cannot be less than 5 characters.",
+                                        "isHidden": true
+                                    }
+                                },
+                                "industry": {
+                                    "config": {
+                                        "subOptional": " - optional"
+                                    },
+                                    "type": "string",
+                                    "title": "Industry",
+                                    "customTemplate": "QSelectBoxSchema",
+                                    "disabled": false,
+                                    "enum": [
+                                        "industri hasil pertanian",
+                                        "industri hasil perikanan",
+                                        "industri hasil kehutanan",
+                                        "Industri pertambangan",
+                                        "Industri kayu lapis",
+                                        "Industri pemintalan",
+                                        "Industri kain",
+                                        "Industri tektil",
+                                        "Industri perbankan",
+                                        "Industri perdagangan",
+                                        "Industri pariwisata",
+                                        "Industri rumah tangga",
+                                        "Industri anyaman",
+                                        "Industri kerajinan",
+                                        "Industri makanan ringan",
+                                        "Industri tempe/tahu",
+                                        "Industri kecil",
+                                        "Industri konveksi",
+                                        "Industri bordir",
+                                        "Industri keramik",
+                                        "Industri sedang",
+                                        "Industri besar",
+                                        "Industri beji/baja",
+                                        "Industri mobil",
+                                        "Industri pesawat terbang",
+                                        "Industri pemintalan benang",
+                                        "Industri ban",
+                                        "Industri perdagangan",
+                                        "Industri minyak goreng",
+                                        "Industri gula",
+                                        "Industri kopi",
+                                        "Industri teh",
+                                        "Industri makanan",
+                                        "Industri semen",
+                                        "Industri BBM",
+                                        "Industri serat sintetis",
+                                        "Industri seni dan hiburan",
+                                        "Industri transportasi",
+                                        "Industri pupuk",
+                                        "Industri pengalengan ikan",
+                                        "Industri jasa",
+                                        "Industri elektronik",
+                                        "Industri otomotif",
+                                        "Industri transportasi",
+                                        "Industri aluminium",
+                                        "Industri meubeler",
+                                        "Industri alat berat",
+                                        "Industri mesin",
+                                        "Industri percetakan",
+                                        "Industri obat-obatan",
+                                        "Industri makanan",
+                                        "Industri minuman",
+                                        "Industri kerajinan",
+                                        "Industri komunikasi",
+                                        "Industri perminyakan",
+                                        "Industri pertambangan",
+                                        "Industri otomotif",
+                                        "Industri transportasi",
+                                        "Industri kertas",
+                                        "Industri perminyakan",
+                                        "Industri bordir",
+                                        "Industri mainan anak",
+                                        "Industri elektronik",
+                                        "Industri persenjataan",
+                                        "Industri kimia dasar",
+                                        "Industri mesin logam dan elektronika",
+                                        "Aneka Industri",
+                                        "Industri mesin",
+                                        "Industri perkapalan",
+                                        "Industri kereta api",
+                                        "Industri mesin listrik",
+                                        "Industri angkutan",
+                                        "Other"
+                                    ],
+                                    "nullOption": {
+                                        "value": "",
+                                        "text": "--Select--"
+                                    },
+                                    "isCollapsed": false,
+                                    "isRequired": false,
+                                    "events": {
+                                        "onFieldValueChanged": {
+                                            "handler": "handlers.proceduralHandler",
+                                            "args": {
+                                                "steps": [
+                                                    {
+                                                        "handler": "handlers.hideSchema",
+                                                        "args": {
+                                                            "path": "properties.personal.properties.profession.properties.subprofession.properties.otherindustry",
+                                                            "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.profession.subprofession.industry') != 'Other') ? true : false}"
+                                                        }
+                                                    },
+                                                    {
+                                                        "handler": "handlers.inlineHandler",
+                                                        "args": {
+                                                            "script": "var isHidden = globalAction.getFieldValue(container.props.storageKey,'personal.profession.subprofession.industry') !== 'Other';if(isHidden){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.profession.subprofession.otherindustry');}globalAction.commitChanges();"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                "otherindustry": {
+                                    "customTemplate": "QTextInputSchema",
+                                    "type": "string",
+                                    "title": "Other Industry",
+                                    "isRequired": false,
+                                    "maxLength": 40,
+                                    "minLength": 3,
+                                    "config": {
+                                        "customError": "Cannot be less than 3 characters.",
+                                        "isHidden": true,
+                                        "subOptional": " - optional"
+                                    }
+                                },
+                                "jobtitle": {
+                                    "config": {
+                                        "subOptional": " - optional"
+                                    },
+                                    "type": "string",
+                                    "title": "Job title",
+                                    "customTemplate": "QSelectBoxSchema",
+                                    "disabled": false,
+                                    "enum": [
+                                        "Staff",
+                                        "Kepala Cabang",
+                                        "Manager",
+                                        "Ass. Manager",
+                                        "Supervisor",
+                                        "Direktur",
+                                        "Pelaksana Lapangan",
+                                        "Officer",
+                                        "Senior Officer",
+                                        "Other"
+                                    ],
+                                    "nullOption": {
+                                        "value": "",
+                                        "text": "--Select--"
+                                    },
+                                    "isCollapsed": false,
+                                    "isRequired": false,
+                                    "events": {
+                                        "onFieldValueChanged": {
+                                            "handler": "handlers.proceduralHandler",
+                                            "args": {
+                                                "steps": [
+                                                    {
+                                                        "handler": "handlers.hideSchema",
+                                                        "args": {
+                                                            "path": "properties.personal.properties.profession.properties.subprofession.properties.otherjobtitle",
+                                                            "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.profession.subprofession.jobtitle') == 'Other') ? false : true}"
+                                                        }
+                                                    },
+                                                    {
+                                                        "handler": "handlers.inlineHandler",
+                                                        "args": {
+                                                            "script": "var isHidden = globalAction.getFieldValue(container.props.storageKey,'personal.profession.subprofession.jobtitle') !== 'Other';if(isHidden){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.profession.subprofession.otherjobtitle');}globalAction.commitChanges();"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                "otherjobtitle": {
+                                    "customTemplate": "QTextInputSchema",
+                                    "type": "string",
+                                    "title": "Other Job title",
+                                    "isRequired": true,
+                                    "maxLength": 40,
+                                    "minLength": 5,
+                                    "config": {
+                                        "customError": "Cannot be less than 5 characters.",
+                                        "isHidden": true
+                                    }
+                                },
+                                "workingperiod": {
+                                    "config": {
+                                        "subOptional": " - optional",
+                                        "maxDate": false,
+                                        "minDate": true
+                                    },
+                                    "customTemplate": "QDatePicker",
+                                    "type": "string",
+                                    "title": "Working period",
+                                    "isRequired": false
+                                },
+                                "salarycurrency": {
+                                    "customTemplate": "QRadioSchema",
+                                    "type": "string",
+                                    "title": "Salary Currency",
+                                    "isRequired": true,
+                                    "enum": [
+                                        "IDR (Rp)",
+                                        "USD ($)"
+                                    ]
+                                },
+                                "annualincome": {
+                                    "type": "string",
+                                    "title": "Annual income",
+                                    "customTemplate": "QSelectBoxSchema",
+                                    "disabled": false,
+                                    "enum": [
+                                        "1.000.000 - 2.500.000",
+                                        "2.500.000 - 3.500.000",
+                                        "3.500.000 - 4.500.000",
+                                        "4.500.000 - 5.500.000"
+                                    ],
+                                    "nullOption": {
+                                        "value": "",
+                                        "text": "--Select--"
+                                    },
+                                    "isCollapsed": false,
+                                    "isRequired": true
+                                },
+                                "officenpwp": {
+                                    "customTemplate": "QTextInputNumericSchema",
+                                    "type": "string",
+                                    "title": "NPWP",
+                                    "help": "*15 Digits code.",
+                                    "isRequired": false,
+                                    "maxLength": 15,
+                                    "minLength": 1,
+                                    "config": {
+                                        "customError": "Please enter a valid NPWP number.",
+                                        "subOptional": " - optional"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "companyname": {
+                    "config": {
+                        "isHidden": true
+                    },
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Workplace",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "question": {
+                            "customTemplate": "QRadioSchema",
+                            "type": "string",
+                            "title": "Do you have a workplace?",
+                            "isRequired": true,
+                            "enum": [
+                                "Yes",
+                                "No"
+                            ],
+                            "events": {
+                                "onFieldValueChanged": {
+                                    "handler": "handlers.proceduralHandler",
+                                    "args": {
+                                        "steps": [
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.personal.properties.companyname.properties.subcompanyname",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.companyname.question') == 'Yes') ? false : true}"
+                                                }
+                                            },
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.personal.properties.mailings.properties.mailingaddresstype",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.companyname.question') == 'Yes') ? false : true}"
+                                                }
+                                            },
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.personal.properties.mailings.properties.mailingaddressworkplace",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'personal.companyname.question') == 'Yes') ? true : false}"
+                                                }
+                                            },
+                                            {
+                                                "handler": "handlers.inlineHandler",
+                                                "args": {
+                                                    "script": "var isHidden = globalAction.getFieldValue(container.props.storageKey,'personal.companyname.question') !== 'Yes';if(isHidden){globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.companyname.subcompanyname');globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.mailings.mailingaddresstype');}else{globalAction.removeFieldValue(container.props.storageKey.replace('insured', 'personal') + '.personal.mailings.mailingaddressworkplace');}globalAction.commitChanges();"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "subcompanyname": {
+                            "config": {
+                                "isHidden": true,
+                                "isSubContainer": true
+                            },
+                            "isRequired": true,
+                            "type": "object",
+                            "title": "Workplace",
+                            "customTemplate": "QWizardContainer",
+                            "properties": {
+                                "companyname": {
+                                    "customTemplate": "QTextInputSchema",
+                                    "type": "string",
+                                    "title": "Company/Place of business",
+                                    "isRequired": true,
+                                    "help": "*Eg: PT.Example group/RM. Esample.",
+                                    "maxLength": 60,
+                                    "minLength": 5,
+                                    "config": {
+                                        "customError": "Cannot be less than 5 characters."
+                                    }
+                                },
+                                "officeaddress": {
+                                    "customTemplate": "QTextInputSchema",
+                                    "type": "string",
+                                    "title": "Office Address",
+                                    "isRequired": true,
+                                    "help": "*Street name & number",
+                                    "maxLength": 60,
+                                    "minLength": 10,
+                                    "config": {
+                                        "customError": "Cannot be less than 10 characters."
+                                    }
+                                },
+                                "officeaddressadditional": {
+                                    "customTemplate": "QTextInputSchema",
+                                    "type": "string",
+                                    "title": "Office Address (Additional)",
+                                    "isRequired": true,
+                                    "help": "*Building & floor",
+                                    "maxLength": 60,
+                                    "minLength": 10,
+                                    "config": {
+                                        "customError": "Cannot be less than 10 characters."
+                                    }
+                                },
+                                "officecity": {
+                                    "type": "string",
+                                    "title": "City",
+                                    "customTemplate": "QSelectBoxSchema",
+                                    "disabled": false,
+                                    "enum": [
+                                        "Aceh Barat",
+                                        "Aceh Barat Daya",
+                                        "Aceh Besar",
+                                        "Aceh Jaya",
+                                        "Aceh Selatan",
+                                        "Aceh Singkil",
+                                        "Aceh Tamiang",
+                                        "Aceh Tengah",
+                                        "Aceh Tenggara",
+                                        "Aceh Timur",
+                                        "Aceh Utara",
+                                        "Agam",
+                                        "Alor",
+                                        "Ambon",
+                                        "Asahan",
+                                        "Asmat",
+                                        "Batam",
+                                        "Badung",
+                                        "Balangan",
+                                        "Balikpapan",
+                                        "Banda Aceh",
+                                        "Bandar Lampung",
+                                        "Bandung",
+                                        "Bandung Barat",
+                                        "Banggai",
+                                        "Banggai Kepulauan",
+                                        "Bangka",
+                                        "Bangka Barat",
+                                        "Bangka Selatan",
+                                        "Bangka Tengah",
+                                        "Bangkalan",
+                                        "Bangli",
+                                        "Banjar",
+                                        "Banjar Baru",
+                                        "Banjarmasin",
+                                        "Banjarnegara",
+                                        "Bantaeng",
+                                        "Bantul",
+                                        "Banyu Asin",
+                                        "Banyumas",
+                                        "Banyuwangi",
+                                        "Barito Kuala",
+                                        "Barito Selatan",
+                                        "Barito Timur",
+                                        "Barito Utara",
+                                        "Barru",
+                                        "Baru",
+                                        "Batang",
+                                        "Batang Hari",
+                                        "Batu",
+                                        "Batu Bara",
+                                        "Baubau",
+                                        "Bekasi",
+                                        "Belitung",
+                                        "Belitung Timur",
+                                        "Belu"
+                                    ],
+                                    "nullOption": {
+                                        "value": "",
+                                        "text": "--Select--"
+                                    },
+                                    "isCollapsed": false,
+                                    "isRequired": true
+                                },
+                                "officeadministrativecity": {
+                                    "type": "string",
+                                    "title": "Administrative city",
+                                    "customTemplate": "QSelectBoxSchema",
+                                    "disabled": false,
+                                    "enum": [
+                                        "Abab",
+                                        "Abang",
+                                        "Abeli",
+                                        "Abenaho",
+                                        "Abepura",
+                                        "Abiansemal",
+                                        "Aboy",
+                                        "Abuki",
+                                        "Abun",
+                                        "Abung  Kunang",
+                                        "Abung Barat",
+                                        "Abung Pekurun",
+                                        "Abung Selatan",
+                                        "Abung Semuli",
+                                        "Abung Surakarta",
+                                        "Abung Tengah",
+                                        "Abung Timur",
+                                        "Abung Tinggi",
+                                        "Adi Luwih",
+                                        "Adian Koting",
+                                        "Adimulyo",
+                                        "Adipala",
+                                        "Adiwerna",
+                                        "Adonara",
+                                        "Adonara Barat",
+                                        "Adonara Tengah",
+                                        "Adonara Timur",
+                                        "Aek Bilah",
+                                        "Aek Kuasan",
+                                        "Aek Kuo",
+                                        "Aek Ledong",
+                                        "Aek Nabara Barumun",
+                                        "Aek Natas",
+                                        "Aek Songsongan",
+                                        "Aere",
+                                        "Aertembaga",
+                                        "Aesesa",
+                                        "Aesesa Selatan",
+                                        "Afulu",
+                                        "Agadugume",
+                                        "Agats",
+                                        "Agimuga",
+                                        "Agisiga",
+                                        "Agrabinta",
+                                        "Agung",
+                                        "Agung Barat",
+                                        "Agung Timur",
+                                        "Aifat",
+                                        "Aifat Selatan",
+                                        "Aifat Timur",
+                                        "Aifat Timur Jauh",
+                                        "Aifat Timur Selatan",
+                                        "Aifat Timur Tengah",
+                                        "Aifat Utara",
+                                        "Aikmel",
+                                        "Aimando Padaido",
+                                        "Aimas",
+                                        "Aimere",
+                                        "Air Batu"
+                                    ],
+                                    "nullOption": {
+                                        "value": "",
+                                        "text": "--Select--"
+                                    },
+                                    "isCollapsed": false,
+                                    "isRequired": true
+                                },
+                                "officedistrict": {
+                                    "type": "string",
+                                    "title": "District",
+                                    "customTemplate": "QSelectBoxSchema",
+                                    "disabled": true,
+                                    "enum": [
+                                        "alen",
+                                        "amplas",
+                                        "amuro",
+                                        "apur",
+                                        "ara",
+                                        "asera",
+                                        "aur",
+                                        "awa",
+                                        "awo",
+                                        "a yani pura",
+                                        "a'bulosibatang",
+                                        "aan",
+                                        "ababi",
+                                        "abadi jaya",
+                                        "abadijaya",
+                                        "abai",
+                                        "abai siat",
+                                        "abail",
+                                        "abaimaida",
+                                        "abak",
+                                        "abamu",
+                                        "abang",
+                                        "abang batu dinding",
+                                        "abang songan",
+                                        "abar-abir",
+                                        "abason",
+                                        "abat",
+                                        "abatadi",
+                                        "abau",
+                                        "abaugi / obaikagopa",
+                                        "abbajareng",
+                                        "abbanderangnge",
+                                        "abbanuang",
+                                        "abbanuange",
+                                        "abbatireng",
+                                        "abbokongang",
+                                        "abbumpungeng",
+                                        "abe pantai",
+                                        "abean",
+                                        "abeko",
+                                        "abeli",
+                                        "abeli dalam",
+                                        "abelisawah",
+                                        "abena",
+                                        "abenaho",
+                                        "abenggi",
+                                        "abepur",
+                                        "aberiambut",
+                                        "abeuk budi"
+                                    ],
+                                    "nullOption": {
+                                        "value": "",
+                                        "text": "--Select--"
+                                    },
+                                    "isCollapsed": false,
+                                    "isRequired": true
+                                },
+                                "officepostalcode": {
+                                    "config": {
+                                        "subOptional": " - optional",
+                                        "customError": "Please enter a valid postal code."
+                                    },
+                                    "customTemplate": "QTextInputNumericSchema",
+                                    "type": "string",
+                                    "title": "Postal Code",
+                                    "help": "*5 Digits code.",
+                                    "isRequired": false,
+                                    "maxLength": 5,
+                                    "minLength": 1
+                                },
+                                "officephoneareacode": {
+                                    "config": {
+                                        "subOptional": " - optional",
+                                        "customError": "Please enter a valid area code (3-4 digits)."
+                                    },
+                                    "customTemplate": "QTextInputNumericSchema",
+                                    "type": "string",
+                                    "title": "Office phone area code",
+                                    "help": "*Eg: 021 / 0274",
+                                    "isRequired": false,
+                                    "maxLength": 4,
+                                    "minLength": 3
+                                },
+                                "officephone": {
+                                    "config": {
+                                        "subOptional": " - optional",
+                                        "customError": "Please enter a valid area code (3-4 digits)."
+                                    },
+                                    "customTemplate": "QTextInputNumericSchema",
+                                    "type": "string",
+                                    "title": "Office phone",
+                                    "help": "*Eg: 8834xxxx",
+                                    "isRequired": false,
+                                    "maxLength": 8,
+                                    "minLength": 3
+                                },
+                                "extnumber": {
+                                    "config": {
+                                        "subOptional": " - optional"
+                                    },
+                                    "customTemplate": "QTextInputNumericSchema",
+                                    "type": "string",
+                                    "title": "Office phone extention",
+                                    "isRequired": false,
+                                    "maxLength": 4,
+                                    "minLength": 3
+                                },
+                                "officefaxareacode": {
+                                    "config": {
+                                        "subOptional": " - optional",
+                                        "customError": "Make sure the number of digits entered is correct (7-8 digits)."
+                                    },
+                                    "customTemplate": "QTextInputNumericSchema",
+                                    "type": "string",
+                                    "title": "Fax area code",
+                                    "help": "*Eg: 021 / 0274",
+                                    "isRequired": false,
+                                    "maxLength": 4,
+                                    "minLength": 3
+                                },
+                                "fax": {
+                                    "config": {
+                                        "subOptional": " - optional",
+                                        "customError": "Make sure the number of digits entered is correct (7-8 digits)."
+                                    },
+                                    "customTemplate": "QTextInputNumericSchema",
+                                    "type": "string",
+                                    "title": "Fax",
+                                    "help": "*Eg: 8834xxxx",
+                                    "isRequired": false,
+                                    "maxLength": 8,
+                                    "minLength": 7
+                                }
+                            }
+                        }
+                    }
+                },
+                "mailings": {
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Mailings",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "mailingaddresstype": {
+                            "config": {
+                                "subOptional": " - optional",
+                                "isHidden": true
+                            },
+                            "customTemplate": "QRadioSchema",
+                            "type": "string",
+                            "title": "Mailing address",
+                            "isRequired": false,
+                            "enum": [
+                                "Workplace",
+                                "Home Address"
+                            ]
+                        },
+                        "mailingaddressworkplace": {
+                            "customTemplate": "QCheckboxSchema",
+                            "type": "string",
+                            "title": "Mailing address",
+                            "isRequired": false,
+                            "config": {
+                                "isHidden": false,
+                                "subOptional": " - optional",
+                                "enum": [
+                                    "Home address"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "health": {
+            "isRoot": true,
+            "isRequired": true,
+            "type": "object",
+            "title": " ",
+            "properties": {
+                "healthagreement": {
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Health form agreement",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "healthagreement": {
+                            "customTemplate": "QContainerStatement",
+                            "type": "string",
+                            "title": " ",
+                            "isRequired": true,
+                            "config": {
+                                "titleLabel": "Calon Pemegang Polis, Calon Tertanggung, Calon Tertanggung Tambahan, Pembayar Premi dan Calon Beneficial Owner (selanjutnya disebut : 'Pemberi Pernyataan'/'Pemberi Kuasa') dengan ini menyatakan :",
+                                "contentLabel": "1. \t\tTelah membaca, mengerti, menjawab serta mengisi dengan benar dan lengkap semua pernyataan dan keterangan yang tercantum dan Surat Permintaan Asuransi Jiwa (SPAJ) ini.\n\n2. \t\tTelah membaca, mengerti, menjawab serta mengisi dengan benar dan lengkap semua pernyataan dan keterangan yang tercantum dan Surat Permintaan Asuransi Jiwa (SPAJ) ini.",
+                                "titleCheck": "I have Read and Agree"
+                            }
+                        }
+                    }
+                },
+                "physical": {
+                    "isRoot": true,
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Physical",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "physicalheight": {
+                            "config": {
+                                "subLabel": "#1",
+                                "customError": "Cannot be less than 2 characters."
+                            },
+                            "customTemplate": "QTextInputNumericSchema",
+                            "type": "string",
+                            "title": "Height (Cm)",
+                            "isRequired": true,
+                            "maxLength": 3,
+                            "minLength": 2
+                        },
+                        "physicalweight": {
+                            "config": {
+                                "subLabel": "#2",
+                                "customError": "Cannot be less than 2 characters."
+                            },
+                            "customTemplate": "QTextInputNumericSchema",
+                            "type": "string",
+                            "title": "Weight (Kg)",
+                            "isRequired": true,
+                            "maxLength": 3,
+                            "minLength": 2
+                        }
+                    }
+                },
+                "hobbiesactivities": {
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Hobbies/Activities",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "activitiesquestion1": {
+                            "config": {
+                                "subLabel": "#1"
+                            },
+                            "customTemplate": "QRadioSchema",
+                            "type": "string",
+                            "title": "Does the prospective insured have hobby(ies) or high-risk activity(ies)?",
+                            "isRequired": true,
+                            "enum": [
+                                "Yes",
+                                "No"
+                            ],
+                            "events": {
+                                "onFieldValueChanged": {
+                                    "handler": "handlers.proceduralHandler",
+                                    "args": {
+                                        "steps": [
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.health.properties.activitiesquestion2",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'health.hobbiesactivities.activitiesquestion1') == 'Yes') ? false : true}"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "activitiesquestion2": {
+                    "customTemplate": "QTextInputSchema",
+                    "config": {
+                        "subLabel": "#2",
+                        "customError": "Cannot be less than 4 characters.",
+                        "isHidden": true
+                    },
+                    "type": "string",
+                    "title": "Sports or high-risk activities carried out by prospective insured?",
+                    "isRequired": true,
+                    "maxLength": 200,
+                    "minLength": 4,
+                    "help": "*If there are more than one answer, separate them with commas (,)"
+                },
+                "smoking": {
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Smoking",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "smokingquestion1": {
+                            "config": {
+                                "subLabel": "#1",
+                                "note": "Note:\nSmoking in this case also refers to use of tobacco / cigarettes / cigar / electric cigarettes (Vape) / nicotine substitute products (including nicotine patches)."
+                            },
+                            "customTemplate": "QRadioSchema",
+                            "type": "string",
+                            "title": "Is prospective insured smoke during The last 12 months?",
+                            "isRequired": true,
+                            "enum": [
+                                "Yes",
+                                "No"
+                            ],
+                            "events": {
+                                "onFieldValueChanged": {
+                                    "handler": "handlers.proceduralHandler",
+                                    "args": {
+                                        "steps": [
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.health.properties.smokingquestion2",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'health.smoking.smokingquestion1') == 'Yes') ? false : true}"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "smokingquestion2": {
+                    "config": {
+                        "subLabel": "#2",
+                        "customError": "Cannot be less than 2 characters.",
+                        "isHidden": true
+                    },
+                    "customTemplate": "QTextInputSchema",
+                    "type": "string",
+                    "title": "How many cigarettes does prospective insured consume in a day?",
+                    "isRequired": true,
+                    "maxLength": 3,
+                    "minLength": 2,
+                    "help": "*Count in rods"
+                },
+                "alcohol": {
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Alcohol",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "alcoholquestion1": {
+                            "config": {
+                                "subLabel": "#1"
+                            },
+                            "customTemplate": "QRadioSchema",
+                            "type": "string",
+                            "title": "Is prospective insured ever consume alcohol?",
+                            "isRequired": true,
+                            "enum": [
+                                "Yes",
+                                "No"
+                            ],
+                            "events": {
+                                "onFieldValueChanged": {
+                                    "handler": "handlers.proceduralHandler",
+                                    "args": {
+                                        "steps": [
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.health.properties.alcoholquestion2",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'health.alcohol.alcoholquestion1') == 'Yes') ? false : true}"
+                                                }
+                                            },
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.health.properties.alcoholquestion3",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'health.alcohol.alcoholquestion1') == 'Yes') ? false : true}"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "alcoholquestion2": {
+                    "config": {
+                        "subLabel": "#2",
+                        "isHidden": true,
+                        "maxDate": false,
+                        "minDate": true
+                    },
+                    "customTemplate": "QDatePicker",
+                    "type": "string",
+                    "title": "Last time prospective insured consumed alcohol?",
+                    "isRequired": true
+                },
+                "alcoholquestion3": {
+                    "config": {
+                        "subLabel": "#3",
+                        "customError": "Cannot be less than 6 characters.",
+                        "isHidden": true
+                    },
+                    "customTemplate": "QTextInputSchema",
+                    "type": "string",
+                    "title": "Number of prospective insured consumes alcohol per day: (In units of measure)",
+                    "isRequired": true,
+                    "maxLength": 10,
+                    "minLength": 6,
+                    "help": "*Eg: 1 Glass/20 Bottles/32 Cans."
+                },
+                "drugs": {
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Drugs",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "drugsquestion1": {
+                            "config": {
+                                "subLabel": "#1"
+                            },
+                            "customTemplate": "QRadioSchema",
+                            "type": "string",
+                            "title": "Are prospective participants insured ever or are using drugs/other addictive ingredients in last 5 (five) years?",
+                            "isRequired": true,
+                            "enum": [
+                                "Yes",
+                                "No"
+                            ]
+                        }
+                    }
+                },
+                "healthhistory": {
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Health history",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "healthhistoryquestion1": {
+                            "config": {
+                                "subLabel": "#1",
+                                "noteBullet": "• Dengue fever\n• Typhus / Typhoid\n• Amoeba colitis (intestinal infection caused by amoeba)\n• Malaria"
+                            },
+                            "customTemplate": "QRadioSchema",
+                            "type": "string",
+                            "title": "In last 5 (five) years, have insured prospective participants experienced any of the following disorders:",
+                            "isRequired": true,
+                            "enum": [
+                                "Yes",
+                                "No"
+                            ]
+                        }
+                    }
+                },
+                "healthhistoryquestion2": {
+                    "config": {
+                        "subLabel": "#2",
+                        "noteBullet": "• Asthma\n• Hepatitis\n• Thyroid disarders"
+                    },
+                    "customTemplate": "QRadioSchema",
+                    "type": "string",
+                    "title": "In past 5 (five) years, have insured prospective participants experienced symptoms / further examination / consultation / diagnosed / currently being examined for the following conditions:",
+                    "isRequired": true,
+                    "enum": [
+                        "Yes",
+                        "No"
+                    ]
+                },
+                "healthhistoryquestion3": {
+                    "config": {
+                        "subLabel": "#3",
+                        "noteBullet": "• Not working for more than 1(one) week\n• Undergoing treatment / treatment for 2(two) consecutive weeks or more\n• Undergoing / recommended Hospitalization in a Health Facility, or doing One Day Care Surgery (One-Day Surgery).\n• Have been advised / recommended / for further treatment / consultation / medical advice with a medical doctor / specialist."
+                    },
+                    "customTemplate": "QRadioSchema",
+                    "type": "string",
+                    "title": "Apart from those who have been insured candidates, it is stated that in the last 5 (five) years the insured participant has experienced a health condition that requires one of the following actions:",
+                    "isRequired": true,
+                    "enum": [
+                        "Yes",
+                        "No"
+                    ]
+                },
+                "healthhistoryquestion4": {
+                    "config": {
+                        "subLabel": "#4"
+                    },
+                    "customTemplate": "QRadioSchema",
+                    "type": "string",
+                    "title": "Is prospective insured participants ever had cancer, in-situ carcinoma, kidney failure, diabetes mellitus / diabetes, HIV / AIDS, stroke including Transient Ischemic Attack (TIA) or any condition related to the heart?",
+                    "isRequired": true,
+                    "enum": [
+                        "Yes",
+                        "No"
+                    ]
+                },
+                "healthhistoryquestion5": {
+                    "config": {
+                        "subLabel": "#5"
+                    },
+                    "customTemplate": "QRadioSchema",
+                    "type": "string",
+                    "title": "Apart from those who have been insured, tell us whether the insured participant has physical or congenital abnormalities: Cystic Fibrosis / Cystic Fibrosis, Blindness, Deafness, Cerebral Palsy, Cerebral Palsy, Mental Disorders (for example: Syndrome Down)?",
+                    "isRequired": true,
+                    "enum": [
+                        "Yes",
+                        "No"
+                    ]
+                },
+                "healthhistoryquestion6": {
+                    "config": {
+                        "subLabel": "#6"
+                    },
+                    "customTemplate": "QRadioSchema",
+                    "type": "string",
+                    "title": "Aside from those who have been insured, state to us, whether the insured participant has any signs or symptoms (including weight loss that is unknown), where the insured prospective participant has not bought / received medical advice regarding the condition?",
+                    "isRequired": true,
+                    "enum": [
+                        "Yes",
+                        "No"
+                    ]
+                },
+                "healthhistoryquestion7": {
+                    "config": {
+                        "subLabel": "#7"
+                    },
+                    "customTemplate": "QRadioSchema",
+                    "type": "string",
+                    "title": "Apart from those who have already been insured, state to us, whether the insured prospective participant or is waiting or has been advised to undergo a test or health check, besides for this insurance application?",
+                    "isRequired": true,
+                    "enum": [
+                        "Yes",
+                        "No"
+                    ]
+                },
+                "familyhistory": {
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Family health history",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "familyhistoryquestion1": {
+                            "config": {
+                                "subLabel": "#1",
+                                "noteBullet": "• Cancer (Colon Cancer) / Other types of cancer)\n• Heart disease\n• Stroke\n• Diabetes mellitus / Diabetes\n• Congenital Polycystic Kidney Disease/atau Familial Polycystic Kidney Disease\n• Motor Nerve Disease / Motor Neuron Disease\n• Parkinson's disease"
+                            },
+                            "customTemplate": "QRadioSchema",
+                            "type": "string",
+                            "title": "Are there any biological/immediate family members insured prospective participants who have one of the following medical history before entering the age of 60?",
+                            "isRequired": true,
+                            "enum": [
+                                "Yes",
+                                "No"
+                            ]
+                        }
+                    }
+                },
+                "pregnancy": {
+                    "config": {
+                        "isHidden": false
+                    },
+                    "isRequired": true,
+                    "type": "object",
+                    "title": "Pregnancy",
+                    "customTemplate": "QWizardContainer",
+                    "properties": {
+                        "pregnancyquestion1": {
+                            "config": {
+                                "subLabel": "#1"
+                            },
+                            "customTemplate": "QRadioSchema",
+                            "type": "string",
+                            "title": "Are you pregnant?",
+                            "isRequired": true,
+                            "enum": [
+                                "Yes",
+                                "No"
+                            ],
+                            "events": {
+                                "onFieldValueChanged": {
+                                    "handler": "handlers.proceduralHandler",
+                                    "args": {
+                                        "steps": [
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.health.properties.pregnancyquestion2",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'health.pregnancy.pregnancyquestion1') == 'Yes') ? false : true}"
+                                                }
+                                            },
+                                            {
+                                                "handler": "handlers.hideSchema",
+                                                "args": {
+                                                    "path": "properties.health.properties.pregnancyquestion3",
+                                                    "value": "${(globalAction.getFieldValue(container.props.storageKey,'health.pregnancy.pregnancyquestion1') == 'Yes') ? false : true}"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "pregnancyquestion2": {
+                    "config": {
+                        "subLabel": "#2",
+                        "isHidden": true
+                    },
+                    "customTemplate": "QTextInputNumericSchema",
+                    "type": "string",
+                    "title": "How old is your womb?",
+                    "isRequired": true,
+                    "maxLength": 2,
+                    "help": "*Count in weeks",
+                    "events": {
+                        "onChange": {
+                            "handler": "handlers.updateOptions",
+                            "args": {
+                                "path": "",
+                                "value": "$"
+                            }
+                        }
+                    }
+                },
+                "pregnancyquestion3": {
+                    "config": {
+                        "subLabel": "#3",
+                        "isHidden": true
+                    },
+                    "customTemplate": "QRadioSchema",
+                    "type": "string",
+                    "title": "Have you ever / been / been told you have had a breast, uterine or ovarian abnormality, a long menstruation, a Pap Smear examination, a Mammogram or other obstetric examination or are you advised to do an examination in the next 12 months?",
+                    "isRequired": true,
+                    "enum": [
+                        "Yes",
+                        "No"
+                    ]
+                }
+            }
+        }
+    }
 }
