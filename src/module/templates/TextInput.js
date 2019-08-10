@@ -38,6 +38,7 @@ export default function TextInputComponent(locals) {
               <TextInput
                 accessibilityLabel={locals.config.accessibilityLabel}
                 maxLength={locals.maxLength}
+                underlineColorAndroid="transparent"
                 style={{
                   borderColor: '#000000',
                   borderBottomWidth: 2,
@@ -62,6 +63,7 @@ export default function TextInputComponent(locals) {
               <TextInput
                 accessibilityLabel={locals.config.accessibilityLabel}
                 maxLength={locals.maxLength}
+                underlineColorAndroid="transparent"
                 style={{
                   borderColor: '#000000',
                   borderBottomWidth: 2,
