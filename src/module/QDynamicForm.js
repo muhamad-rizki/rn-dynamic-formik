@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {
   FlatList,
+  FlatListProps,
   View,
   Button,
   Text,
@@ -9,10 +10,16 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import withDynamicForm from './withDynamicForm';
 
+export type FormHeaderProps = ({});
+export type FormFooterProps = ({});
+
 export type QDynamicFormProps = ({
   schema: string,
   type: 'wizard' | 'single-form',
   storageKey: string,
+  header: (props: FormHeaderProps) => React.Component,
+  footer: (props: FormFooterProps) => React.Component,
+  formProps: FlatListProps,
 });
 
 const formPaths = (schema, initialValues, suffix) => {
@@ -134,8 +141,9 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
     this.initialize();
   }
 
-  componentWillReceiveProps = (props) => {
-    this.initialize(props);
+  shouldComponentUpdate = (nextProps) => {
+    this.initialize(nextProps);
+    return false;
   }
 
   initialize = (props) => {
@@ -166,26 +174,16 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
     const _component = deepFind(this.currentSchema, `properties.${p.split('.').join('.properties.')}`);
     const _parentComponent = deepFind(this.currentSchema, `properties.${p.split('.').slice(0, p.split('.').length - 1).join('.properties.')}`);
     const isContainer = !!_component.properties;
-    const template = _component.customTemplate && templates[_component.customTemplate]
-      ? templates[_component.customTemplate]
-      : templates.TextInput;
+    let template = isContainer ? templates.DefaultContainer : templates.TextInput;
+
+    if (_component.customTemplate && templates[_component.customTemplate]) {
+      template = templates[_component.customTemplate];
+    }
 
     if (
       (_component.config && _component.config.isHidden)
       || (_parentComponent && _parentComponent.config && _parentComponent.config.isHidden)
     ) return null;
-
-    if (isContainer) {
-      return (
-        <View
-          key={p}
-          style={{ flex: 1 }}
-          onLayout={(e) => { this.itemHeights[index] = e.nativeEvent.layout.height; }}
-        >
-          <Text>{_component.title}</Text>
-        </View>
-      );
-    }
 
     const error = deepFind(this.errors, p);
 
@@ -212,7 +210,10 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
             value: deepFind(this.values, p),
             error,
             hasError: !!error,
-            config: !_component.config ? {} : _component.config,
+            config: {
+              ..._component.config,
+              accessibilityLabel: p.toLowerCase().replace(/(\.)/g, '_'),
+            },
           })
         }
       </View>
@@ -229,6 +230,56 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
     return sum;
   }
 
+  renderHeaderForm = () => {
+    const { header } = this.props;
+    return (
+      <View style={{ flex: 1 }}>
+        {(header && header(this.props)) || undefined}
+      </View>
+    );
+  }
+
+  renderFooterForm = () => {
+    const { footer } = this.props;
+    return (
+      <View style={{ flex: 1 }}>
+        {
+          (footer && footer(this.props)) || (
+            <Button
+              disabled={this.isValidating}
+              onPress={this.onFormSubmit}
+              title="Submit"
+            />
+          )
+        }
+      </View>
+    );
+  }
+
+  formFieldKeyExtractor = item => item;
+
+  setRefView = (v) => { this.container = v; }
+
+  onFormSubmit = () => {
+    this.validateForm()
+      .then((_errors) => {
+        if (Object.keys(_errors).length === 0) {
+          return this.handleSubmit();
+        }
+        let scrollTo;
+        this.initialPaths.forEach((item, index) => {
+          const error = typeof deepFind(_errors, item) === 'string';
+          if (error && !scrollTo) {
+            scrollTo = index;
+          }
+        });
+        return this.container.scrollToOffset({
+          animated: true,
+          offset: this.itemHeights.slice(0, scrollTo).reduce((a, b) => a + b, 0),
+        });
+      });
+  }
+
   renderForm = ({
     values,
     setFieldValue,
@@ -236,44 +287,33 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
     handleSubmit,
     validateForm,
     setFieldError,
+    isValidating,
   }) => {
     this.errors = errors;
     this.values = values;
     this.setFieldValue = setFieldValue;
     this.setFieldError = setFieldError;
+    this.validateForm = validateForm;
+    this.handleSubmit = handleSubmit;
+    this.isValidating = isValidating;
 
     if (!this.currentSchema || Object.keys(this.currentSchema).length === 0) return null;
+
+    const { formProps } = this.props;
 
     return (
       <View style={{ flex: 1, }}>
         <FlatList
+          {...formProps}
+          removeClippedSubviews
           data={this.initialPaths}
           renderItem={this.renderFormField}
           extraData={{ error: this.errors, values: this.values }}
-          keyExtractor={item => item}
-          ref={(v) => { this.container = v; }}
-        />
-        <Button
-          onPress={() => {
-            validateForm()
-              .then((_errors) => {
-                if (Object.keys(_errors).length === 0) {
-                  return handleSubmit();
-                }
-                let scrollTo;
-                this.initialPaths.forEach((item, index) => {
-                  const error = typeof deepFind(_errors, item) === 'string';
-                  if (error && !scrollTo) {
-                    scrollTo = index;
-                  }
-                });
-                return this.container.scrollToOffset({
-                  animated: true,
-                  offset: this.itemHeights.slice(0, scrollTo).reduce((a, b) => a + b, 0),
-                });
-              });
-          }}
-          title="Submit"
+          keyExtractor={this.formFieldKeyExtractor}
+          nestedScrollEnabled
+          ListHeaderComponent={this.renderHeaderForm}
+          ListFooterComponent={this.renderFooterForm}
+          ref={this.setRefView}
         />
       </View>
     );
