@@ -7,6 +7,8 @@ export const DynamicFormContext = React.createContext(
     formats: {},
     templates: {},
     formValues: {},
+    currentStep: 0,
+    setCurrentStep: () => { },
     setFormValues: () => { },
     updateSchema: () => { },
   },

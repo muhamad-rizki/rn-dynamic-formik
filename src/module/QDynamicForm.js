@@ -1,15 +1,14 @@
 import React, { Component } from 'react';
 import {
-  FlatList,
-  FlatListProps,
   View,
   Button,
-  Text,
+  ScrollView,
 } from 'react-native';
 import { Formik } from 'formik';
 import posed, { Transition } from 'react-native-pose';
 import * as Yup from 'yup';
 import withDynamicForm from './withDynamicForm';
+import { nextItem } from './helper';
 
 export type FormHeaderProps = ({});
 export type FormFooterProps = ({});
@@ -20,8 +19,6 @@ export type QDynamicFormProps = ({
   storageKey: string,
   header: (props: FormHeaderProps) => React.Component,
   footer: (props: FormFooterProps) => React.Component,
-  formProps: FlatListProps,
-  staggerField: Boolean,
 });
 
 const formPaths = (schema, initialValues, suffix) => {
@@ -132,9 +129,14 @@ const formValidations = (schema, initialValues) => {
   return newInitialValues;
 };
 
-const Field = posed.View({
-  enter: { opacity: 1, y: 0, delay: ({ index }) => 100 + (index * 50) },
-  exit: { opacity: 0, y: 50 }
+const Container = posed.View({
+  enter: { opacity: 1, delayChildren: 200, staggerChildren: 50 },
+  exit: { opacity: 0 }
+});
+
+const Item = posed.View({
+  enter: { opacity: 1 },
+  exit: { opacity: 0 }
 });
 
 class QDynamicFormComponent extends Component<QDynamicFormProps> {
@@ -148,9 +150,8 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
     this.initialize();
   }
 
-  shouldComponentUpdate = (nextProps) => {
+  componentDidUpdate = (nextProps) => {
     this.initialize(nextProps);
-    return false;
   }
 
   initialize = (props) => {
@@ -167,6 +168,11 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
     this.formValidation = Yup.object().shape(formValidations(schema, [], []));
     this.events = formEvents(schema, []);
     this.itemHeights = [];
+    this.steps = Object.keys(this.currentSchema.properties);
+    this.stepIndex = [];
+    this.steps.forEach((step) => {
+      this.stepIndex.push(this.initialPaths.findIndex(p => p === step));
+    });
   }
 
   runValidation = (p) => {
@@ -175,7 +181,7 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
       .catch(err => this.setFieldError(p, err.message));
   }
 
-  renderFormField = ({ item: p, index }) => {
+  renderFormField = (p, index) => {
     const { templates } = this.props;
 
     const _component = deepFind(this.currentSchema, `properties.${p.split('.').join('.properties.')}`);
@@ -194,51 +200,37 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
 
     const error = deepFind(this.errors, p);
 
-    const { staggerField } = this.props;
-
     return (
-      <Transition animateOnMount={staggerField} index={index}>
-        <Field
-          key={p}
-          style={{ flex: 1 }}
-          onLayout={(e) => { this.itemHeights[index] = e.nativeEvent.layout.height; }}
-        >
-          {
-            template({
-              ..._component,
-              options: _component.enum,
-              label: _component.title,
-              onChange: (value) => {
-                deepSetValue(this.values, value === '' ? undefined : value, p);
-                this.setFieldValue(p, value === '' ? undefined : value);
-                this.runValidation(p);
-              },
-              onBlur: () => {
-                this.runValidation(p);
-              },
-              path: p,
-              value: deepFind(this.values, p),
-              error,
-              hasError: !!error,
-              config: {
-                ..._component.config,
-                accessibilityLabel: p.toLowerCase().replace(/(\.)/g, '_'),
-              },
-            })
-          }
-        </Field>
-      </Transition>
+      <Item
+        key={p}
+        style={{ flex: 1 }}
+        onLayout={(e) => { this.itemHeights[index] = e.nativeEvent.layout.height; }}
+      >
+        {
+          template({
+            ..._component,
+            options: _component.enum,
+            label: _component.title,
+            onChange: (value) => {
+              deepSetValue(this.values, value === '' ? undefined : value, p);
+              this.setFieldValue(p, value === '' ? undefined : value);
+              this.runValidation(p);
+            },
+            onBlur: () => {
+              this.runValidation(p);
+            },
+            path: p,
+            value: deepFind(this.values, p),
+            error,
+            hasError: !!error,
+            config: {
+              ..._component.config,
+              accessibilityLabel: p.toLowerCase().replace(/(\.)/g, '_'),
+            },
+          })
+        }
+      </Item>
     );
-  }
-
-  sumObjectValue = (_object, keys) => {
-    let sum = 0;
-    keys.forEach((k, index) => {
-      if (index < keys.length) {
-        sum += _object[k] || 0;
-      }
-    });
-    return sum;
   }
 
   renderHeaderForm = () => {
@@ -253,7 +245,7 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
   renderFooterForm = () => {
     const { footer } = this.props;
     return (
-      <View style={{ flex: 1 }}>
+      <Item style={{ flex: 1 }} key="form_footer">
         {
           (footer && footer(this.props)) || (
             <Button
@@ -263,7 +255,7 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
             />
           )
         }
-      </View>
+      </Item>
     );
   }
 
@@ -274,19 +266,42 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
   onFormSubmit = () => {
     this.validateForm()
       .then((_errors) => {
+        const { type, currentStep, setCurrentStep } = this.props;
         if (Object.keys(_errors).length === 0) {
           return this.handleSubmit();
         }
-        let scrollTo;
-        this.initialPaths.forEach((item, index) => {
-          const error = typeof deepFind(_errors, item) === 'string';
-          if (error && !scrollTo) {
-            scrollTo = index;
+        if (type === 'wizard') {
+          if (!_errors[this.steps[currentStep]]) {
+            this.resetForm(this.values);
+            setCurrentStep(currentStep + 1,
+              () => this.container.scrollTo({ animated: false, y: 0 }));
+            return true;
           }
-        });
-        return this.container.scrollToOffset({
+        }
+        let scrollTo;
+        if (type === 'single-form') {
+          this.initialPaths.forEach((item, index) => {
+            const error = typeof deepFind(_errors, item) === 'string';
+            if (error && !scrollTo) {
+              scrollTo = index;
+            }
+          });
+        } else {
+          this.initialPaths
+            .slice(this.stepIndex[currentStep],
+              nextItem(this.stepIndex, currentStep) === 0
+                ? this.initialPaths.length
+                : nextItem(this.stepIndex, currentStep))
+            .forEach((item, index) => {
+              const error = typeof deepFind(_errors, item) === 'string';
+              if (error && !scrollTo) {
+                scrollTo = index;
+              }
+            });
+        }
+        return this.container.scrollTo({
           animated: true,
-          offset: this.itemHeights.slice(0, scrollTo).reduce((a, b) => a + b, 0),
+          y: this.itemHeights.slice(0, scrollTo).reduce((a, b) => a + b, 0),
         });
       });
   }
@@ -299,7 +314,9 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
     validateForm,
     setFieldError,
     isValidating,
+    resetForm,
   }) => {
+    this.resetForm = resetForm;
     this.errors = errors;
     this.values = values;
     this.setFieldValue = setFieldValue;
@@ -308,24 +325,54 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
     this.handleSubmit = handleSubmit;
     this.isValidating = isValidating;
 
-    if (!this.currentSchema || Object.keys(this.currentSchema).length === 0) return null;
+    const { type, currentStep } = this.props;
 
-    const { formProps } = this.props;
+    if (type === 'wizard') {
+      if (!this.currentSchema || Object.keys(this.currentSchema).length === 0) return null;
+    }
+
+    this.stepComponents = this.stepIndex.map(_indx => (
+      <Container key={`container_form_wizard_step_${_indx + 1}`}>
+        {
+          this.initialPaths.slice(_indx,
+            nextItem(this.stepIndex, currentStep) === 0
+              ? this.initialPaths.length
+              : nextItem(this.stepIndex, currentStep)).map(this.renderFormField)
+        }
+        {this.renderFooterForm()}
+      </Container>
+    ));
 
     return (
-      <View style={{ flex: 1, }}>
-        <FlatList
-          {...formProps}
-          data={this.initialPaths}
-          renderItem={this.renderFormField}
-          extraData={{ error: this.errors, values: this.values, schema: this.currentSchema }}
-          keyExtractor={this.formFieldKeyExtractor}
-          nestedScrollEnabled
-          ListHeaderComponent={this.renderHeaderForm}
-          ListFooterComponent={this.renderFooterForm}
-          ref={this.setRefView}
-        />
-      </View>
+      <ScrollView
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={false}
+        ref={this.setRefView}
+      >
+        <View style={{ flex: 1, }}>
+          {this.renderHeaderForm()}
+          {
+            type !== 'wizard'
+              ? (
+                <Transition animateOnMount>
+                  <Container key="container_form_non_wizard">
+                    {
+                      this.initialPaths.map(this.renderFormField)
+                    }
+                    {this.renderFooterForm()}
+                  </Container>
+                </Transition>
+              )
+              : (
+                <Transition animateOnMount>
+                  {
+                    this.stepComponents[currentStep]
+                  }
+                </Transition>
+              )
+          }
+        </View>
+      </ScrollView>
     );
   }
 

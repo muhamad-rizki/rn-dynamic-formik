@@ -10,3 +10,20 @@ export function isEmpty(obj) {
       return obj.trim() === '';
   }
 }
+
+export function nextItem(arr, current) {
+  if (!Array.isArray(arr)) throw Error('First args should be an array');
+  let i = current + 1;
+  i %= arr.length;
+  return arr[i];
+}
+
+export function previousItem(arr, current) {
+  if (!Array.isArray(arr)) throw Error('First args should be an array');
+  let i = current;
+  if (current === 0) {
+    return undefined;
+  }
+  i -= 1;
+  return arr[i];
+}

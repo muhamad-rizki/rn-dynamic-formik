@@ -19,6 +19,7 @@ export default class DynamicFormProvider extends React.Component<DynamicFormProv
     this.state = {
       formValues: {},
       schemas: props.schemas,
+      currentStep: 0,
     };
   }
 
@@ -36,6 +37,8 @@ export default class DynamicFormProvider extends React.Component<DynamicFormProv
     this.setState({ schemas: newSchemas });
   }
 
+  setCurrentStep = (currentStep, callback) => this.setState({ currentStep }, callback);
+
   render() {
     const {
       formats,
@@ -46,6 +49,7 @@ export default class DynamicFormProvider extends React.Component<DynamicFormProv
     const {
       formValues,
       schemas,
+      currentStep,
     } = this.state;
     return (
       <DynamicForm.Provider
@@ -64,6 +68,8 @@ export default class DynamicFormProvider extends React.Component<DynamicFormProv
           formValues,
           setFormValues: this.setFormValues,
           updateSchema: this.updateSchema,
+          currentStep,
+          setCurrentStep: this.setCurrentStep,
         }}
       >
         {children}
