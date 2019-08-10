@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import {
   FlatList,
   View,
@@ -151,7 +151,7 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
     this.initialPaths = formPaths(schema, [], []);
     this.formValidation = Yup.object().shape(formValidations(schema, [], []));
     this.events = formEvents(schema, []);
-    this.itemHeights = {};
+    this.itemHeights = [];
   }
 
   runValidation = (p) => {
@@ -160,7 +160,7 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
       .catch(err => this.setFieldError(p, err.message));
   }
 
-  renderFormField = ({ item: p }) => {
+  renderFormField = ({ item: p, index }) => {
     const { templates } = this.props;
 
     const _component = deepFind(this.currentSchema, `properties.${p.split('.').join('.properties.')}`);
@@ -177,7 +177,11 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
 
     if (isContainer) {
       return (
-        <View key={p} style={{ flex: 1 }} onLayout={(e) => { this.itemHeights[p] = e.nativeEvent.layout.height; }}>
+        <View
+          key={p}
+          style={{ flex: 1 }}
+          onLayout={(e) => { this.itemHeights[index] = e.nativeEvent.layout.height; }}
+        >
           <Text>{_component.title}</Text>
         </View>
       );
@@ -186,7 +190,11 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
     const error = deepFind(this.errors, p);
 
     return (
-      <View key={p} style={{ flex: 1 }} onLayout={(e) => { this.itemHeights[p] = e.nativeEvent.layout.height; }}>
+      <View
+        key={p}
+        style={{ flex: 1 }}
+        onLayout={(e) => { this.itemHeights[index] = e.nativeEvent.layout.height; }}
+      >
         {
           template({
             ..._component,
@@ -249,20 +257,20 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
           onPress={() => {
             validateForm()
               .then((_errors) => {
+                if (Object.keys(_errors).length === 0) {
+                  return handleSubmit();
+                }
                 let scrollTo;
-                let scrollToId;
                 this.initialPaths.forEach((item, index) => {
-                  const error = deepFind(_errors, item);
+                  const error = typeof deepFind(_errors, item) === 'string';
                   if (error && !scrollTo) {
-                    scrollTo = item;
-                    scrollToId = index;
+                    scrollTo = index;
                   }
                 });
-                console.log(scrollTo);
-                console.log(this.itemHeights);
-                console.log(this.initialPaths.slice(0, scrollTo + 1));
-                console.log(this.sumObjectValue(this.itemHeights, this.initialPaths.slice(0, scrollTo + 1)));
-                this.container.scrollToIndex({ animated: true, viewOffset: this.itemHeights[scrollTo], index: scrollToId, viewPosition: 0 });
+                return this.container.scrollToOffset({
+                  animated: true,
+                  offset: this.itemHeights.slice(0, scrollTo).reduce((a, b) => a + b, 0),
+                });
               });
           }}
           title="Submit"
