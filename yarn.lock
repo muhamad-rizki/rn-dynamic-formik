@@ -803,6 +803,11 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^12.0.9"
 
+"@popmotion/easing@^1.0.1":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@popmotion/easing/-/easing-1.0.2.tgz#17d925c45b4bf44189e5a38038d149df42d8c0b4"
+  integrity sha512-IkdW0TNmRnWTeWI7aGQIVDbKXPWHVEYdGgd5ZR4SH/Ty/61p63jCjrPxX1XrR7IGkl08bjhJROStD7j+RKgoIw==
+
 "@react-native-community/cli@^1.2.1":
   version "1.11.2"
   resolved "http://192.168.85.5:8081/nexus/repository/npm-group/@react-native-community/cli/-/cli-1.11.2.tgz#b14967f24a389f5a16889a747345cf0e5757a2f1"
@@ -876,6 +881,11 @@
   dependencies:
     "@babel/types" "^7.3.0"
 
+"@types/invariant@^2.2.29":
+  version "2.2.30"
+  resolved "https://registry.yarnpkg.com/@types/invariant/-/invariant-2.2.30.tgz#20efa342807606ada5483731a8137cb1561e5fe9"
+  integrity sha512-98fB+yo7imSD2F7PF7GIpELNgtLNgo5wjivu0W5V4jx+KVVJxo6p/qN4zdzSTBWy4/sN3pPyXwnhRSD28QX+ag==
+
 "@types/istanbul-lib-coverage@*", "@types/istanbul-lib-coverage@^2.0.0":
   version "2.0.1"
   resolved "http://192.168.85.5:8081/nexus/repository/npm-group/@types/istanbul-lib-coverage/-/istanbul-lib-coverage-2.0.1.tgz#42995b446db9a48a11a07ec083499a860e9138ff"
@@ -895,6 +905,11 @@
   dependencies:
     "@types/istanbul-lib-coverage" "*"
     "@types/istanbul-lib-report" "*"
+
+"@types/node@^10.0.5":
+  version "10.14.15"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.14.15.tgz#e8f7729b631be1b02ae130ff0b61f3e018000640"
+  integrity sha512-CBR5avlLcu0YCILJiDIXeU2pTw7UK/NIxfC63m7d7CVamho1qDEzXKkOtEauQRPMy6MI8mLozth+JJkas7HY6g==
 
 "@types/stack-utils@^1.0.1":
   version "1.0.1"
@@ -966,6 +981,15 @@ ajv@^6.10.0, ajv@^6.10.2, ajv@^6.5.5:
     fast-json-stable-stringify "^2.0.0"
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
+
+animated-pose@^1.0.0, animated-pose@^1.2.0:
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/animated-pose/-/animated-pose-1.2.3.tgz#3a2f47e0e5711edfdeaceb18bc9afc448cf4d401"
+  integrity sha512-7XtulKltEIt/E+7jOz4+pCduZENRI3DU/8zvqzCGmKTAmPJiXeT34P4oYmZ83PzKd4orJqv0kN3D7Zh0COjPWg==
+  dependencies:
+    "@popmotion/easing" "^1.0.1"
+    hey-listen "^1.0.5"
+    pose-core "^2.0.3"
 
 ansi-colors@^1.0.1:
   version "1.1.0"
@@ -2924,6 +2948,11 @@ has@^1.0.1, has@^1.0.3:
   integrity sha512-f2dvO0VU6Oej7RkWJGrehjbzMAjFp5/VKPp5tTpWIV4JHHZK1/BxbFRtf/siA2SWTe09caDmVtYYzWEIbBS4zw==
   dependencies:
     function-bind "^1.1.1"
+
+hey-listen@^1.0.5:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/hey-listen/-/hey-listen-1.0.8.tgz#8e59561ff724908de1aa924ed6ecc84a56a9aa68"
+  integrity sha512-COpmrF2NOg4TBWUJ5UVyaCU2A88wEMkUPK4hNqyCkqHbxT92BbvfjoSozkAIIm6XhicGlJHhFdullInrdhwU8Q==
 
 hoist-non-react-statics@^3.3.0:
   version "3.3.0"
@@ -5192,6 +5221,16 @@ pn@^1.1.0:
   resolved "http://192.168.85.5:8081/nexus/repository/npm-group/pn/-/pn-1.1.0.tgz#e2f4cef0e219f463c179ab37463e4e1ecdccbafb"
   integrity sha512-2qHaIQr2VLRFoxe2nASzsV6ef4yOOH+Fi9FBOVH6cqeSgUnoyySPZkxzLuzd+RYOQTRpROA0ztTMqxROKSb/nA==
 
+pose-core@^2.0.3:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/pose-core/-/pose-core-2.1.0.tgz#653c85a9a06f924611b909b4a2180ce102bbb258"
+  integrity sha512-36mVAnIgbM6jfyRug8EqqFbazHUAk9dxwVRpX61FlVw3amI/j7AFegtVU56N0Dht2aYDJIhgYPUYraT1CzjHDw==
+  dependencies:
+    "@types/invariant" "^2.2.29"
+    "@types/node" "^10.0.5"
+    hey-listen "^1.0.5"
+    tslib "^1.9.1"
+
 posix-character-classes@^0.1.0:
   version "0.1.1"
   resolved "http://192.168.85.5:8081/nexus/repository/npm-group/posix-character-classes/-/posix-character-classes-0.1.1.tgz#01eac0fe3b5af71a2a6c02feabb8c1fef7e00eab"
@@ -5359,6 +5398,14 @@ react-is@^16.7.0, react-is@^16.8.1, react-is@^16.8.3, react-is@^16.8.4:
   resolved "http://192.168.85.5:8081/nexus/repository/npm-group/react-is/-/react-is-16.8.6.tgz#5bbc1e2d29141c9fbdfed456343fe2bc430a6a16"
   integrity sha512-aUk3bHfZ2bRSVFFbbeVS4i+lNPZr3/WM5jT2J5omUVV1zzcs1nAaf3l51ctA5FFvCRbhrH0bdAsRRQddFJZPtA==
 
+react-native-pose@^0.9.1:
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/react-native-pose/-/react-native-pose-0.9.1.tgz#dbee4e0970d0a4d55c380e3099a2e91bc8980c81"
+  integrity sha512-JQ17SWXk6Hetlxfj3PO09/jYt5PMwu+MZ9YPcgRp5A//EtYXvfHS+IieXDnCg36wi74yZ80MvYx025//g/tqbQ==
+  dependencies:
+    animated-pose "^1.2.0"
+    react-pose-core "^0.5.0"
+
 react-native@0.59.10:
   version "0.59.10"
   resolved "http://192.168.85.5:8081/nexus/repository/npm-group/react-native/-/react-native-0.59.10.tgz#352f381e382f93a0403be499c9e384bf51c2591c"
@@ -5414,6 +5461,14 @@ react-native@0.59.10:
     ws "^1.1.5"
     xmldoc "^0.4.0"
     yargs "^9.0.0"
+
+react-pose-core@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/react-pose-core/-/react-pose-core-0.5.0.tgz#1f362cae5eb6331f430cde75c662879017681da3"
+  integrity sha512-vzpeO0G47gDBxTQ2DZMKIbbz3BdEPT6dr3LoaxyZQWaPMBqYNY2hdi0cRLqqy5EWmvqorLY/vl/q3arNGBmUeg==
+  dependencies:
+    animated-pose "^1.0.0"
+    hey-listen "^1.0.5"
 
 react-proxy@^1.1.7:
   version "1.1.8"
@@ -6380,7 +6435,7 @@ trim-right@^1.0.1:
   resolved "http://192.168.85.5:8081/nexus/repository/npm-group/trim-right/-/trim-right-1.0.1.tgz#cb2e1203067e0c8de1f614094b9fe45704ea6003"
   integrity sha1-yy4SAwZ+DI3h9hQJS5/kVwTqYAM=
 
-tslib@^1.9.0, tslib@^1.9.3:
+tslib@^1.9.0, tslib@^1.9.1, tslib@^1.9.3:
   version "1.10.0"
   resolved "http://192.168.85.5:8081/nexus/repository/npm-group/tslib/-/tslib-1.10.0.tgz#c3c19f95973fb0a62973fb09d90d961ee43e5c8a"
   integrity sha512-qOebF53frne81cf0S9B41ByenJ3/IuH8yJKngAX35CmiZySA0khhkovshKK+jGCaMnVomla7gVlIcc3EvKPbTQ==

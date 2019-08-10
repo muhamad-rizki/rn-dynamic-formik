@@ -7,6 +7,7 @@ import {
   Text,
 } from 'react-native';
 import { Formik } from 'formik';
+import posed, { Transition } from 'react-native-pose';
 import * as Yup from 'yup';
 import withDynamicForm from './withDynamicForm';
 
@@ -130,6 +131,11 @@ const formValidations = (schema, initialValues) => {
   return newInitialValues;
 };
 
+const Field = posed.View({
+  enter: { opacity: 1, y: 0, delay: ({ index }) => 100 + (index * 50) },
+  exit: { opacity: 0, y: 50 }
+});
+
 class QDynamicFormComponent extends Component<QDynamicFormProps> {
   constructor(props) {
     super(props);
@@ -188,35 +194,37 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
     const error = deepFind(this.errors, p);
 
     return (
-      <View
-        key={p}
-        style={{ flex: 1 }}
-        onLayout={(e) => { this.itemHeights[index] = e.nativeEvent.layout.height; }}
-      >
-        {
-          template({
-            ..._component,
-            options: _component.enum,
-            label: _component.title,
-            onChange: (value) => {
-              deepSetValue(this.values, value === '' ? undefined : value, p);
-              this.setFieldValue(p, value === '' ? undefined : value);
-              this.runValidation(p);
-            },
-            onBlur: () => {
-              this.runValidation(p);
-            },
-            path: p,
-            value: deepFind(this.values, p),
-            error,
-            hasError: !!error,
-            config: {
-              ..._component.config,
-              accessibilityLabel: p.toLowerCase().replace(/(\.)/g, '_'),
-            },
-          })
-        }
-      </View>
+      <Transition animateOnMount index={index}>
+        <Field
+          key={p}
+          style={{ flex: 1 }}
+          onLayout={(e) => { this.itemHeights[index] = e.nativeEvent.layout.height; }}
+        >
+          {
+            template({
+              ..._component,
+              options: _component.enum,
+              label: _component.title,
+              onChange: (value) => {
+                deepSetValue(this.values, value === '' ? undefined : value, p);
+                this.setFieldValue(p, value === '' ? undefined : value);
+                this.runValidation(p);
+              },
+              onBlur: () => {
+                this.runValidation(p);
+              },
+              path: p,
+              value: deepFind(this.values, p),
+              error,
+              hasError: !!error,
+              config: {
+                ..._component.config,
+                accessibilityLabel: p.toLowerCase().replace(/(\.)/g, '_'),
+              },
+            })
+          }
+        </Field>
+      </Transition>
     );
   }
 
@@ -305,10 +313,9 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
       <View style={{ flex: 1, }}>
         <FlatList
           {...formProps}
-          removeClippedSubviews
           data={this.initialPaths}
           renderItem={this.renderFormField}
-          extraData={{ error: this.errors, values: this.values }}
+          extraData={{ error: this.errors, values: this.values, schema: this.currentSchema }}
           keyExtractor={this.formFieldKeyExtractor}
           nestedScrollEnabled
           ListHeaderComponent={this.renderHeaderForm}
