@@ -21,6 +21,7 @@ export type QDynamicFormProps = ({
   header: (props: FormHeaderProps) => React.Component,
   footer: (props: FormFooterProps) => React.Component,
   formProps: FlatListProps,
+  staggerField: Boolean,
 });
 
 const formPaths = (schema, initialValues, suffix) => {
@@ -193,8 +194,10 @@ class QDynamicFormComponent extends Component<QDynamicFormProps> {
 
     const error = deepFind(this.errors, p);
 
+    const { staggerField } = this.props;
+
     return (
-      <Transition animateOnMount index={index}>
+      <Transition animateOnMount={staggerField} index={index}>
         <Field
           key={p}
           style={{ flex: 1 }}

@@ -8,6 +8,7 @@ class SimpleFormComponent extends Component {
       <QDynamicForm
         schema="simpleform"
         type="wizard"
+        staggerField
       />
     );
   }
