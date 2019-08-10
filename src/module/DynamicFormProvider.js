@@ -4,6 +4,7 @@ import TextInput from './templates/TextInput';
 import DatePicker from './templates/DatePicker';
 import CheckBox from './templates/CheckBox';
 import RadioGroup from './templates/RadioGroup';
+import DefaultContainer from './templates/DefaultContainer';
 
 export type DynamicFormProviderProps = ({
   formats: Object,
@@ -56,6 +57,7 @@ export default class DynamicFormProvider extends React.Component<DynamicFormProv
             DatePicker,
             CheckBox,
             RadioGroup,
+            DefaultContainer,
             ...templates,
           },
           types,
